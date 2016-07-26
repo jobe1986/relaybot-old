@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copy to config.xml and then edit -->
+<config>
+	<irc name="IRCNetwork">
+		<server host="irc.server.tld" port="6667" password="" />
+		<user nick="RelayBot" user="RelayBot" gecos="Simple Relay Bot" />
+		<channel name="#minecraft">
+			<relay type="minecraft" name="Minecraft" channel="" />
+		</channel>
+	</irc>
+	<minecraft name="Minecraft">
+		<rcon host="127.0.0.1" port="25575" password="password" />
+		<udp host="127.0.0.1" port="25585" />
+		<relay type="irc" name="IRCNetwork" channel="#minecraft" />
+	</minecraft>
+</config>
