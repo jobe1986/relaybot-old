@@ -9,7 +9,29 @@
 		</channel>
 	</irc>
 	<minecraft name="Minecraft">
+		<!--
+			This module requires your minecraft server have rcon enabled.
+
+			To enable rcon in your minecraft server you will need these parameters in
+			server.properties:
+			enable-rcon=true
+			rcon.port=25575
+			rcon.password=password
+			broadcast-rcon-to-ops=false
+		-->
 		<rcon host="127.0.0.1" port="25575" password="password" />
+		<!--
+			This module requires your minecraft server to be configured to relay log
+			messages to this bot in a log4j2 JSON format via UDP.
+
+			To configure your minecraft server to do this first edit the supplied log4j2.xml
+			and change the IP and port in the <Socket> block to match the IP and port
+			of the <udp> block here.
+
+			Then you must make sure to use the command line flag
+			"-Dlog4j.configurationFile=/path/to/log4j2.xml" every time you run your minecraft
+			server. (Don't forget to change the path to log4j2.xml)
+		-->
 		<udp host="127.0.0.1" port="25585" />
 		<relay type="irc" name="IRCNetwork" channel="#minecraft" prefix="[Minecraft]" />
 	</minecraft>
