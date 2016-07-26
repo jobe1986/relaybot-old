@@ -5,12 +5,12 @@
 		<server host="irc.server.tld" port="6667" password="" />
 		<user nick="RelayBot" user="RelayBot" gecos="Simple Relay Bot" />
 		<channel name="#minecraft">
-			<relay type="minecraft" name="Minecraft" channel="" />
+			<relay type="minecraft" name="Minecraft" channel="" prefix="[IRC]" />
 		</channel>
 	</irc>
 	<minecraft name="Minecraft">
 		<rcon host="127.0.0.1" port="25575" password="password" />
 		<udp host="127.0.0.1" port="25585" />
-		<relay type="irc" name="IRCNetwork" channel="#minecraft" />
+		<relay type="irc" name="IRCNetwork" channel="#minecraft" prefix="[Minecraft]" />
 	</minecraft>
 </config>
