@@ -24,6 +24,9 @@
 			This module requires your minecraft server to be configured to relay log
 			messages to this bot in a log4j2 JSON format via UDP.
 
+			An example of this JSON formated message is:
+			{"logger":"net.minecraft.server.MinecraftServer","timestamp":"1469551100808","level":"INFO","thread":"Server thread","message":"<Jobe> Hello world!"}
+
 			To configure your minecraft server to do this first edit the supplied log4j2.xml
 			and change the IP and port in the <Socket> block to match the IP and port
 			of the <udp> block here.
