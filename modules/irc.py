@@ -225,7 +225,7 @@ class client:
 	def _doping(self):
 		if not self._pingrcvd:
 			log(LOG_NORMAL, '[IRC::' + self._name + '] --- Ping Timeout\n')
-			self._disconnect('', False)
+			self.disconnect('', False)
 			self._schedconnect()
 			return
 		self.send('PING ' + self._server['curserver'])
