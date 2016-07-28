@@ -218,7 +218,7 @@ class client:
 				buf = ''
 				src = ('0.0.0.0', 0)
 			if buf != '':
-				log.log(LOG_DEBUG, 'UDP::[' + src[0] + ']:' + str(src[1]) + '] <-- ' + buf, self)
+				log.log(LOG_DEBUG, 'UDP:[' + src[0] + ']:' + str(src[1]) + ' <-- ' + buf, self)
 				if buf[0] == ',':
 					buf = buf[1:]
 				try:
