@@ -453,7 +453,7 @@ class client:
 	def _relaycallback(self, channel, args):
 		if self._rconconnected:
 			if args[1] == 'irc':
-				if args[3]['params'][-1][0:8] == '!players':
+				if args[3]['params'][-1][0:8] == '?players':
 					self._rconcommand('list', self._cmd_players, (args[1], args[2], args[3]))
 					return
 			self._rconcommand('tellraw @a ' + json.dumps([args[0]]))
