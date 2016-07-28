@@ -81,7 +81,7 @@ logging.setLoggerClass(MyLogger)
 log = logging.getLogger('relaybot')
 
 loghandler = logging.StreamHandler(sys.stdout)
-logformatter = UTCFormatter('[%(asctime)s] [%(modname)s/%(levelname)s] --- %(message)s', '%Y-%m-%d %H:%M:%S')
+logformatter = UTCFormatter('[%(asctime)s] [%(modname)s/%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
 
 loghandler.setFormatter(logformatter)
 
