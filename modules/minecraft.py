@@ -150,7 +150,7 @@ class client:
 
 	def __init__(self, name, rconhost='127.0.0.1', rconport=25575, rconpass='',
 			udphost=None, udpport=25585, schedobj=None, schedpri=100):
-		self._name = name
+		self.name = name
 		self._rcon = {'host': rconhost, 'port': rconport, 'password': rconpass}
 		self._rconsock = None
 		self._rconconnected = False
@@ -168,11 +168,11 @@ class client:
 		self._rconexpiretimeout = 30
 		if self._sched == None:
 			self._sched = sched.scheduler(time.time, time.sleep)
-		relay.bind('minecraft', self._name, self._relaycallback)
+		relay.bind('minecraft', self.name, self._relaycallback)
 
 	def __del__(self):
 		self.disconnect("Shutting down")
-		relay.unbind('minecraft', self._name, self._relaycallback)
+		relay.unbind('minecraft', self.name, self._relaycallback)
 		self._deltimer(self._schedevs['expirecalls'])
 
 	def _addtimer(self, delay=10, callback=None, params=(), ts=None, pri=None):
@@ -218,7 +218,7 @@ class client:
 				buf = ''
 				src = ('0.0.0.0', 0)
 			if buf != '':
-				log(LOG_NORMAL, '[Minecraft::' + self._name + '::UDP::[' + src[0] + ']:' + str(src[1]) + '] <-- ' + buf + '\n')
+				log(LOG_NORMAL, '[Minecraft::' + self.name + '::UDP::[' + src[0] + ']:' + str(src[1]) + '] <-- ' + buf + '\n')
 				if buf[0] == ',':
 					buf = buf[1:]
 				try:
@@ -239,7 +239,7 @@ class client:
 			except:
 				buf = ''
 			if buf != '':
-				log(LOG_NORMAL, '[Minecraft::' + self._name + '::RCON] <-- ' + binascii.hexlify(buf) + '\n')
+				log(LOG_NORMAL, '[Minecraft::' + self.name + '::RCON] <-- ' + binascii.hexlify(buf) + '\n')
 
 				self._rconbuf = self._rconbuf + buf
 
@@ -257,7 +257,7 @@ class client:
 
 				(idin, type, payload, padding) = unpack('<ii' + str(size-10) + 's2s', packet)
 
-				log(LOG_NORMAL, '[Minecraft::' + self._name + '::RCON] <-- id:' + str(idin) + ', type:' + str(type) + ', payload:' + payload + '\n')
+				log(LOG_NORMAL, '[Minecraft::' + self.name + '::RCON] <-- id:' + str(idin) + ', type:' + str(type) + ', payload:' + payload + '\n')
 
 				self._rconhandle(idin, type, payload)
 
@@ -333,7 +333,7 @@ class client:
 			rtext = text
 			if rel.prefix != '':
 				rtext = rel.prefix + ' ' + text
-			relay.call(rel.type, rel.name, rel.channel, (rtext, 'minecraft', self._name, obj))
+			relay.call(rel.type, rel.name, rel.channel, (rtext, 'minecraft', self.name, obj))
 
 	def _cleanformatting(self, text):
 		s = text.replace(u'§0', '')
@@ -401,7 +401,7 @@ class client:
 		if self._schedevs['conn'] != None:
 			return
 		self._schedevs['conn'] = self._addtimer(delay=freq, callback=self.connect)
-		log(LOG_NORMAL, '[Minecraft::' + self._name + '] --- Attempting to reconnect in ' + str(freq) + ' seconds\n')
+		log(LOG_NORMAL, '[Minecraft::' + self.name + '] --- Attempting to reconnect in ' + str(freq) + ' seconds\n')
 
 	def _rconsend(self, id=0, type=0, payload=None):
 		if self._rconsock == None:
@@ -416,20 +416,20 @@ class client:
 
 		packet = pack('<i', len(packet)) + packet
 
-		log(LOG_NORMAL, '[Minecraft::' + self._name + '::RCON] --> ' + binascii.hexlify(packet) + '\n')
-		log(LOG_NORMAL, '[Minecraft::' + self._name + '::RCON] --> id:' + str(id) + ', type:' + str(type) + ', payload:' + payload + '\n')
+		log(LOG_NORMAL, '[Minecraft::' + self.name + '::RCON] --> ' + binascii.hexlify(packet) + '\n')
+		log(LOG_NORMAL, '[Minecraft::' + self.name + '::RCON] --> id:' + str(id) + ', type:' + str(type) + ', payload:' + payload + '\n')
 
 		self._rconsock.send(packet)
 
 	def _rconhandle(self, id, type, payload):
 		if id == -1 and type == 2:
 			self.disconnect()
-			log(LOG_ERROR, '[Minecraft::' + self._name + '::RCON] !!! Unable to login to RCON, will not attempt to reconnect\n')
+			log(LOG_ERROR, '[Minecraft::' + self.name + '::RCON] !!! Unable to login to RCON, will not attempt to reconnect\n')
 		if type == 2:
 			self._rconconnected = True
 			self._deltimer(self._schedevs['login'])
 			self._schedevs['login'] = None
-			log(LOG_NORMAL, '[Minecraft::' + self._name + '::RCON] --- Sucessfully logged in to RCON\n')
+			log(LOG_NORMAL, '[Minecraft::' + self.name + '::RCON] --- Sucessfully logged in to RCON\n')
 		if type == 0:
 			if id in self._rconcalls:
 				if self._rconcalls[id]['callback'] != None:
@@ -438,7 +438,7 @@ class client:
 
 	def _rcontimeout(self):
 		if self._rconconnected:
-			log(LOG_ERROR, '[Minecraft::' + self._name + '::RCON] !!! Timed out logging in to RCON, attempting to reconnect\n')
+			log(LOG_ERROR, '[Minecraft::' + self.name + '::RCON] !!! Timed out logging in to RCON, attempting to reconnect\n')
 		self.disconnect()
 		self._schedconnect()
 
@@ -461,7 +461,7 @@ class client:
 	def _rconexpirecalls(self):
 		for id in self._rconcalls.keys():
 			if self._rconcalls[id]['time'] + self._rconexpiretimeout > time.time():
-				log(LOG_NORMAL, '[Minecraft::' + self._name + '] --- Expiring RCON callback: ' + str(self._rconcalls[id]) + '\n')
+				log(LOG_NORMAL, '[Minecraft::' + self.name + '] --- Expiring RCON callback: ' + str(self._rconcalls[id]) + '\n')
 				del self._rconcalls[id]
 		self._schedevs['expirecalls'] = self._addtimer(delay=self._rconexpiretimeout, callback=self._rconexpirecalls)
 
@@ -486,7 +486,7 @@ class client:
 			try:
 				addrs = socket.getaddrinfo(self._udp['host'], self._udp['port'], 0, 0, socket.IPPROTO_UDP)
 			except Exception as e:
-				log(LOG_ERROR, '[Minecraft::' + self._name + '] !!! Error binding UDP socket: ' + str(e) + '\n')
+				log(LOG_ERROR, '[Minecraft::' + self.name + '] !!! Error binding UDP socket: ' + str(e) + '\n')
 
 			if len(addrs) < 1:
 				return
@@ -495,13 +495,13 @@ class client:
 			try:
 				s = mysocket(af, socktype, proto)
 			except Exception as e:
-				log(LOG_ERROR, '[Minecraft::' + self._name + '] !!! Error creating UDP socket: ' + str(e) + '\n')
+				log(LOG_ERROR, '[Minecraft::' + self.name + '] !!! Error creating UDP socket: ' + str(e) + '\n')
 				return
 
 			try:
 				s.bind(sa)
 			except Exception as e:
-				log(LOG_ERROR, '[Minecraft::' + self._name + '] !!! Error binding UDP socket: ' + str(e) + '\n')
+				log(LOG_ERROR, '[Minecraft::' + self.name + '] !!! Error binding UDP socket: ' + str(e) + '\n')
 				return
 
 			self._udpsock = s
@@ -510,7 +510,7 @@ class client:
 		try:
 			addrs = socket.getaddrinfo(self._rcon['host'], self._rcon['port'], 0, 0, socket.IPPROTO_TCP)
 		except Exception as e:
-			log(LOG_ERROR, '[Minecraft::' + self._name + '] !!! Error connecting rcon socket: ' + str(e) + '\n')
+			log(LOG_ERROR, '[Minecraft::' + self.name + '] !!! Error connecting rcon socket: ' + str(e) + '\n')
 
 		if len(addrs) < 1:
 			return
@@ -533,7 +533,7 @@ class client:
 			break
 
 		if s == None:
-			log(LOG_ERROR, '[Minecraft::' + self._name + '] !!! Error connecting to rcon\n')
+			log(LOG_ERROR, '[Minecraft::' + self.name + '] !!! Error connecting to rcon\n')
 			self._schedconnect()
 			return
 
@@ -564,4 +564,4 @@ class client:
 		if not rel in self._relays:
 			self._relays.append(rel)
 		print self._relays
-		log(LOG_NORMAL, '[Minecraft::' + self._name + '] --- Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix=' + prefix + ')\n')
+		log(LOG_NORMAL, '[Minecraft::' + self.name + '] --- Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix=' + prefix + ')\n')

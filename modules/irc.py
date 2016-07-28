@@ -133,7 +133,7 @@ class client:
 	def __init__(self, name, connfreq=10, pingfreq=120, capdelay=3, schedobj=None, schedpri=100,
 				nick='IRCBot', user='IRCBot', gecos='IRCBot',
 				server='localhost', port=6667, serverpassword=None, performs=[]):
-		self._name = name
+		self.name = name
 		self._sock = None
 		self._connected = False
 		self._disconnecting = False
@@ -169,11 +169,11 @@ class client:
 		self.bindmsg('part', self._m_part)
 		self.bindmsg('cap', self._m_cap)
 		self.bindmsg('error', self._m_error)
-		relay.bind('irc', self._name, self._relaycallback)
+		relay.bind('irc', self.name, self._relaycallback)
 
 	def __del__(self):
 		self.disconnect("Shutting down")
-		relay.unbind('irc', self._name, self._relaycallback)
+		relay.unbind('irc', self.name, self._relaycallback)
 		return
 
 	def _nullcallback(self, *args, **kwargs):
@@ -224,7 +224,7 @@ class client:
 
 	def _doping(self):
 		if not self._pingrcvd:
-			log(LOG_NORMAL, '[IRC::' + self._name + '] --- Ping Timeout\n')
+			log(LOG_NORMAL, '[IRC::' + self.name + '] --- Ping Timeout\n')
 			self.disconnect('', False)
 			self._schedconnect()
 			return
@@ -246,12 +246,12 @@ class client:
 		if self._schedevs['conn'] != None:
 			return
 		self._schedevs['conn'] = self._addtimer(delay=freq, callback=self.connect)
-		log(LOG_NORMAL, '[IRC::' + self._name + '] --- Attempting to reconnect in ' + str(freq) + ' seconds\n')
+		log(LOG_NORMAL, '[IRC::' + self.name + '] --- Attempting to reconnect in ' + str(freq) + ' seconds\n')
 
 	def _doline(self, line):
 		if ((line == None) or (line == '')):
 			return
-		log(LOG_NORMAL, '[IRC::' + self._name + '] <-- ' + line + '\n')
+		log(LOG_NORMAL, '[IRC::' + self.name + '] <-- ' + line + '\n')
 		msg = self._parse_raw(line)
 		self._execmsg(msg)
 
@@ -338,7 +338,7 @@ class client:
 						if prefix != '':
 							prefix = rel.prefix + ' '
 						text = prefix + '<' + msg['source']['name'] + '> ' + text
-					relay.call(rel.type, rel.name, rel.channel, (text, 'irc', self._name, msg))
+					relay.call(rel.type, rel.name, rel.channel, (text, 'irc', self.name, msg))
 
 	def _m_join(self, msg):
 		chan = msg['params'][0]
@@ -361,7 +361,7 @@ class client:
 	def _m_nick(self, msg):
 		if msg['source']['name'].lower() == self._myid['curnick'].lower():
 			self._myid['curnick'] = msg['params'][0]
-			log(LOG_NORMAL, '[IRC::' + self._name + '] --- Current nick changed to: ' + self._myid['curnick'] + '\n')
+			log(LOG_NORMAL, '[IRC::' + self.name + '] --- Current nick changed to: ' + self._myid['curnick'] + '\n')
 
 	def _m_cap(self, msg):
 		if not self._iscap:
@@ -384,7 +384,7 @@ class client:
 					self._caps[cap] = True
 
 	def _m_error(self, msg):
-		log(LOG_NORMAL, '[IRC::' + self._name + '] --- Disconnected from ' + self._server['server'] + ', attemoting to reconnect\n')
+		log(LOG_NORMAL, '[IRC::' + self.name + '] --- Disconnected from ' + self._server['server'] + ', attemoting to reconnect\n')
 		self.disconnect('', False)
 		self._schedconnect(self._nexterrconnfreq)
 		self._nexterrconnfreq = self._nexterrconnfreq + self._errconnfreq
@@ -417,16 +417,16 @@ class client:
 			self._deltimer(self._schedevs['cap'])
 		self._schedevs['cap'] = None
 		self._schedevs['perform'] = None
-		log(LOG_NORMAL, '[IRC::' + self._name + '] --- Attempting to connect to ' + self._server['server'] + ' on port ' + str(self._server['port']) + '\n')
+		log(LOG_NORMAL, '[IRC::' + self.name + '] --- Attempting to connect to ' + self._server['server'] + ' on port ' + str(self._server['port']) + '\n')
 
 		addrs = []
 
 		try:
 			addrs = socket.getaddrinfo(self._server['server'], self._server['port'], 0, 0, socket.IPPROTO_TCP)
 		except socket.gaierror as e:
-			log(LOG_ERROR, '[IRC::' + self._name + '] !!! Error connecting to ' + self._server['server'] + ': ' + e.strerror + '\n')
+			log(LOG_ERROR, '[IRC::' + self.name + '] !!! Error connecting to ' + self._server['server'] + ': ' + e.strerror + '\n')
 		except:
-			log(LOG_ERROR, '[IRC::' + self._name + '] !!! Unknown error looking up host name ' + self._server['server'] + '\n')
+			log(LOG_ERROR, '[IRC::' + self.name + '] !!! Unknown error looking up host name ' + self._server['server'] + '\n')
 
 		if (len(addrs) < 1):
 			return
@@ -448,7 +448,7 @@ class client:
 			break
 
 		if s == None:
-			log(LOG_ERROR, '[IRC::' + self._name + '] !!! Error connecting to ' + self._server['server'] + '\n')
+			log(LOG_ERROR, '[IRC::' + self.name + '] !!! Error connecting to ' + self._server['server'] + '\n')
 			self._schedconnect()
 			return
 
@@ -456,7 +456,7 @@ class client:
 		self._sock = s
 		self._addsock()
 
-		log(LOG_NORMAL, '[IRC::' + self._name + '] --- Connected to ' + self._server['server'] + ' on port ' + str(self._server['port']) + '\n')
+		log(LOG_NORMAL, '[IRC::' + self.name + '] --- Connected to ' + self._server['server'] + ' on port ' + str(self._server['port']) + '\n')
 
 		self._startping()
 		self._schedevs['cap'] = self._addtimer(delay=self._capdelay, callback=self._docapend)
@@ -506,11 +506,11 @@ class client:
 			print str(e)
 			sent = 0
 		if (sent == 0):
-			log(LOG_NORMAL, '[IRC::' + self._name + '] --- Disconnected from ' + self._server['server'] + ', attemoting to reconnect\n')
+			log(LOG_NORMAL, '[IRC::' + self.name + '] --- Disconnected from ' + self._server['server'] + ', attemoting to reconnect\n')
 			self.disconnect('', False)
 			self._schedconnect()
 			return
-		log(LOG_NORMAL, '[IRC::' + self._name + '] --> ' + line + '\n')
+		log(LOG_NORMAL, '[IRC::' + self.name + '] --> ' + line + '\n')
 
 	def channel_add(self, channel):
 		if channel == None or channel == '':
@@ -527,7 +527,7 @@ class client:
 				self._relays[relchan.lower()].append(rel)
 		else:
 			self._relays[relchan.lower()] = [rel]
-		log(LOG_NORMAL, '[IRC::' + self._name + '] --- Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix:' + prefix + ')\n')
+		log(LOG_NORMAL, '[IRC::' + self.name + '] --- Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix:' + prefix + ')\n')
 
 	def doread(self, sock):
 		if self._sock != sock:
@@ -539,7 +539,7 @@ class client:
 			buf = ''
 
 		if (buf == ''):
-			log(LOG_NORMAL, '[IRC::' + self._name + '] --- Received no data from ' + self._server['server'] + ', attemoting to reconnect\n')
+			log(LOG_NORMAL, '[IRC::' + self.name + '] --- Received no data from ' + self._server['server'] + ', attemoting to reconnect\n')
 			self.disconnect('', False)
 			self._schedconnect()
 			return
@@ -559,7 +559,7 @@ class client:
 		return
 
 	def doerr(self, sock):
-		log(LOG_NORMAL, '[IRC::' + self._name + '] --- Exceptional condition from ' + self._server['server'] + ', attemoting to reconnect\n')
+		log(LOG_NORMAL, '[IRC::' + self.name + '] --- Exceptional condition from ' + self._server['server'] + ', attemoting to reconnect\n')
 		self.disconnect('', False)
 		self._schedconnect()
 		return
