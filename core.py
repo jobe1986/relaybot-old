@@ -8,7 +8,7 @@ import sched
 
 
 from modules.config import *
-from modules.logging import *
+from modules.mylogging import *
 
 import modules.irc as irc
 import modules.minecraft as minecraft
@@ -49,7 +49,7 @@ except KeyboardInterrupt as e:
 	for sock in sockets:
 		sock.dodisconnect('Shutting down (Ctrl+C)')
 except Exception as e:
-	log(LOG_NORMAL, str(e) + '\n')
+	log.log(LOG_CRITICAL, str(e))
 	sockets = irc.client.sockets + minecraft.client.sockets
 	for sock in sockets:
 		sock.dodisconnect('Exception: ' + str(e))

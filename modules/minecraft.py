@@ -11,7 +11,7 @@ import time
 from struct import pack, unpack
 from modules.mysocket import mysocket
 
-from modules.logging import *
+from modules.mylogging import *
 import modules.relay as relay
 
 configs = {}
@@ -24,47 +24,47 @@ def loadconfig(doc):
 
 	for cli in cliconfs:
 		if not 'name' in cli.attrib:
-			log(LOG_ERROR, '[Minecraft] !!! Minrcraft client config missing name attribute' + '\n')
-			raise Exception('[Minecraft] !!! Minecraft client config missing name attribute')
+			log.log(LOG_ERROR, 'Minrcraft client config missing name attribute')
+			raise Exception('Minecraft client config missing name attribute')
 		if cli.attrib['name'] in configs:
-			log(LOG_ERROR, '[Minecraft] !!! Duplicate Minecraft config name' + '\n')
-			raise Exception('[Minecraft] !!! Duplicate Minecraft config name')
+			log.log(LOG_ERROR, 'Duplicate Minecraft config name')
+			raise Exception('Duplicate Minecraft config name')
 
 		name = cli.attrib['name']
 		configs[name] = {'rcon': {'host': '', 'port': '', 'password': ''}, 'udp': {'host': '', 'port': ''}}
 
 		rcon = cli.find('./rcon')
 		if not 'host' in rcon.attrib:
-			log(LOG_ERROR, '[Minecraft] !!! Minrcraft client rcon config missing host attribute' + '\n')
-			raise Exception('[Minecraft] !!! Minrcraft client rcon config missing host attribute')
+			log.log(LOG_ERROR, 'Minrcraft client rcon config missing host attribute')
+			raise Exception('Minrcraft client rcon config missing host attribute')
 		if not 'port' in rcon.attrib:
-			log(LOG_ERROR, '[Minecraft] !!! Minrcraft client rcon config missing port attribute' + '\n')
-			raise Exception('[Minecraft] !!! Minrcraft client rcon config missing port attribute')
+			log.log(LOG_ERROR, 'Minrcraft client rcon config missing port attribute')
+			raise Exception('Minrcraft client rcon config missing port attribute')
 		if not 'password' in rcon.attrib:
-			log(LOG_ERROR, '[Minecraft] !!! Minrcraft client rcon config missing password attribute' + '\n')
-			raise Exception('[Minecraft] !!! Minrcraft client rcon config missing password attribute')
+			log.log(LOG_ERROR, 'Minrcraft client rcon config missing password attribute')
+			raise Exception('Minrcraft client rcon config missing password attribute')
 		configs[name]['rcon'] = rcon.attrib
 
 		udp = cli.find('./udp')
 		if not 'port' in udp.attrib:
-			log(LOG_ERROR, '[Minecraft] !!! Minrcraft client udp config missing port attribute' + '\n')
-			raise Exception('[Minecraft] !!! Minrcraft client udp config missing port attribute')
+			log.log(LOG_ERROR, 'Minrcraft client udp config missing port attribute')
+			raise Exception('Minrcraft client udp config missing port attribute')
 		configs[name]['udp'] = udp.attrib
 
 		rels = cli.findall('./relay')
 		configs[name]['relays'] = []
 		for rel in rels:
 			if not 'type' in rel.attrib:
-				log(LOG_ERROR, '[Minecraft] !!! Minecraft channel relay missing type attribute' + '\n')
-				raise Exception('[Minecraft] !!! Minecraft channel relay missing type attribute')
+				log.log(LOG_ERROR, 'Minecraft channel relay missing type attribute')
+				raise Exception('Minecraft channel relay missing type attribute')
 			if not 'name' in rel.attrib:
-				log(LOG_ERROR, '[Minecraft] !!! Minecraft channel relay missing name attribute' + '\n')
-				raise Exception('[Minecraft] !!! Minecraft channel relay missing name attribute')
+				log.log(LOG_ERROR, 'Minecraft channel relay missing name attribute')
+				raise Exception('Minecraft channel relay missing name attribute')
 			if not 'channel' in rel.attrib:
-				log(LOG_ERROR, '[Minecraft] !!! Minecraft channel relay missing channel attribute' + '\n')
-				raise Exception('[Minecraft] !!! Minecraft channel relay missing channel attribute')
+				log.log(LOG_ERROR, 'Minecraft channel relay missing channel attribute')
+				raise Exception('Minecraft channel relay missing channel attribute')
 			if rel.attrib['type'] == 'minecraft' and rel.attrib['name'] == name:
-				log(LOG_NORMAL, '[Minecraft] --- Ignoring attempt to relay Minecraft to itself\n')
+				log.log(LOG_INFO, 'Ignoring attempt to relay Minecraft to itself')
 				continue
 			relnew = rel.attrib
 			if not 'prefix' in relnew:
@@ -218,7 +218,7 @@ class client:
 				buf = ''
 				src = ('0.0.0.0', 0)
 			if buf != '':
-				log(LOG_NORMAL, '[Minecraft::' + self.name + '::UDP::[' + src[0] + ']:' + str(src[1]) + '] <-- ' + buf + '\n')
+				log.log(LOG_DEBUG, 'UDP::[' + src[0] + ']:' + str(src[1]) + '] <-- ' + buf, self)
 				if buf[0] == ',':
 					buf = buf[1:]
 				try:
@@ -239,7 +239,7 @@ class client:
 			except:
 				buf = ''
 			if buf != '':
-				log(LOG_NORMAL, '[Minecraft::' + self.name + '::RCON] <-- ' + binascii.hexlify(buf) + '\n')
+				log.log(LOG_DEBUG, 'RCON <-- ' + binascii.hexlify(buf), self)
 
 				self._rconbuf = self._rconbuf + buf
 
@@ -257,7 +257,7 @@ class client:
 
 				(idin, type, payload, padding) = unpack('<ii' + str(size-10) + 's2s', packet)
 
-				log(LOG_NORMAL, '[Minecraft::' + self.name + '::RCON] <-- id:' + str(idin) + ', type:' + str(type) + ', payload:' + payload + '\n')
+				log.log(LOG_DEBUG, 'RCON <-- id:' + str(idin) + ', type:' + str(type) + ', payload:' + payload, self)
 
 				self._rconhandle(idin, type, payload)
 
@@ -401,7 +401,7 @@ class client:
 		if self._schedevs['conn'] != None:
 			return
 		self._schedevs['conn'] = self._addtimer(delay=freq, callback=self.connect)
-		log(LOG_NORMAL, '[Minecraft::' + self.name + '] --- Attempting to reconnect in ' + str(freq) + ' seconds\n')
+		log.log(LOG_INFO, 'Attempting to reconnect in ' + str(freq) + ' seconds', self)
 
 	def _rconsend(self, id=0, type=0, payload=None):
 		if self._rconsock == None:
@@ -416,20 +416,20 @@ class client:
 
 		packet = pack('<i', len(packet)) + packet
 
-		log(LOG_NORMAL, '[Minecraft::' + self.name + '::RCON] --> ' + binascii.hexlify(packet) + '\n')
-		log(LOG_NORMAL, '[Minecraft::' + self.name + '::RCON] --> id:' + str(id) + ', type:' + str(type) + ', payload:' + payload + '\n')
+		log.log(LOG_DEBUG, 'RCON --> ' + binascii.hexlify(packet), self)
+		log.log(LOG_DEBUG, 'RCON --> id:' + str(id) + ', type:' + str(type) + ', payload:' + payload, self)
 
 		self._rconsock.send(packet)
 
 	def _rconhandle(self, id, type, payload):
 		if id == -1 and type == 2:
 			self.disconnect()
-			log(LOG_ERROR, '[Minecraft::' + self.name + '::RCON] !!! Unable to login to RCON, will not attempt to reconnect\n')
+			log.log(LOG_ERROR, 'RCON Unable to login to RCON, will not attempt to reconnect', self)
 		if type == 2:
 			self._rconconnected = True
 			self._deltimer(self._schedevs['login'])
 			self._schedevs['login'] = None
-			log(LOG_NORMAL, '[Minecraft::' + self.name + '::RCON] --- Sucessfully logged in to RCON\n')
+			log.log(LOG_INFO, 'RCON Sucessfully logged in to RCON', self)
 		if type == 0:
 			if id in self._rconcalls:
 				if self._rconcalls[id]['callback'] != None:
@@ -438,7 +438,7 @@ class client:
 
 	def _rcontimeout(self):
 		if self._rconconnected:
-			log(LOG_ERROR, '[Minecraft::' + self.name + '::RCON] !!! Timed out logging in to RCON, attempting to reconnect\n')
+			log.log(LOG_ERROR, 'RCON Timed out logging in to RCON, attempting to reconnect', self)
 		self.disconnect()
 		self._schedconnect()
 
@@ -461,7 +461,7 @@ class client:
 	def _rconexpirecalls(self):
 		for id in self._rconcalls.keys():
 			if self._rconcalls[id]['time'] + self._rconexpiretimeout > time.time():
-				log(LOG_NORMAL, '[Minecraft::' + self.name + '] --- Expiring RCON callback: ' + str(self._rconcalls[id]) + '\n')
+				log.log(LOG_INFO, 'Expiring RCON callback: ' + str(self._rconcalls[id]), self)
 				del self._rconcalls[id]
 		self._schedevs['expirecalls'] = self._addtimer(delay=self._rconexpiretimeout, callback=self._rconexpirecalls)
 
@@ -486,7 +486,7 @@ class client:
 			try:
 				addrs = socket.getaddrinfo(self._udp['host'], self._udp['port'], 0, 0, socket.IPPROTO_UDP)
 			except Exception as e:
-				log(LOG_ERROR, '[Minecraft::' + self.name + '] !!! Error binding UDP socket: ' + str(e) + '\n')
+				log.log(LOG_ERROR, 'Error binding UDP socket: ' + str(e), self)
 
 			if len(addrs) < 1:
 				return
@@ -495,13 +495,13 @@ class client:
 			try:
 				s = mysocket(af, socktype, proto)
 			except Exception as e:
-				log(LOG_ERROR, '[Minecraft::' + self.name + '] !!! Error creating UDP socket: ' + str(e) + '\n')
+				log.log(LOG_ERROR, 'Error creating UDP socket: ' + str(e), self)
 				return
 
 			try:
 				s.bind(sa)
 			except Exception as e:
-				log(LOG_ERROR, '[Minecraft::' + self.name + '] !!! Error binding UDP socket: ' + str(e) + '\n')
+				log.log(LOG_ERROR, 'Error binding UDP socket: ' + str(e), self)
 				return
 
 			self._udpsock = s
@@ -510,7 +510,7 @@ class client:
 		try:
 			addrs = socket.getaddrinfo(self._rcon['host'], self._rcon['port'], 0, 0, socket.IPPROTO_TCP)
 		except Exception as e:
-			log(LOG_ERROR, '[Minecraft::' + self.name + '] !!! Error connecting rcon socket: ' + str(e) + '\n')
+			log.log(LOG_ERROR, 'Error connecting rcon socket: ' + str(e), self)
 
 		if len(addrs) < 1:
 			return
@@ -533,7 +533,7 @@ class client:
 			break
 
 		if s == None:
-			log(LOG_ERROR, '[Minecraft::' + self.name + '] !!! Error connecting to rcon\n')
+			log.log(LOG_ERROR, 'Error connecting to rcon', self)
 			self._schedconnect()
 			return
 
@@ -564,4 +564,4 @@ class client:
 		if not rel in self._relays:
 			self._relays.append(rel)
 		print self._relays
-		log(LOG_NORMAL, '[Minecraft::' + self.name + '] --- Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix=' + prefix + ')\n')
+		log.log(LOG_INFO, 'Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix=' + prefix + ')', self)

@@ -2,7 +2,7 @@
 
 import socket
 
-from modules.logging import *
+from modules.mylogging import *
 
 class mysocket(socket.socket):
 	def __init__(self, *p, **d):

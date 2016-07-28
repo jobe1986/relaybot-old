@@ -5,7 +5,7 @@ import sched
 import time
 import sys
 
-from modules.logging import *
+from modules.mylogging import *
 from modules.mysocket import mysocket
 import modules.relay as relay
 
@@ -19,10 +19,10 @@ def loadconfig(doc):
 
 	for irccli in cliconfs:
 		if not 'name' in irccli.attrib:
-			log(LOG_ERROR, '[IRC] !!! IRC client config missing name attribute' + '\n')
+			log.log(LOG_ERROR, 'IRC client config missing name attribute')
 			raise Exception('IRC client config missing name attribute')
 		if irccli.attrib['name'] in configs:
-			log(LOG_ERROR, '[IRC] !!! Duplicate IRC client config name' + '\n')
+			log.log(LOG_ERROR, 'Duplicate IRC client config name')
 			raise Exception('Duplicate IRC client config name')
 
 		name = irccli.attrib['name']
@@ -30,19 +30,19 @@ def loadconfig(doc):
 
 		servs = irccli.findall('./server')
 		if len(servs) > 1:
-			log(LOG_ERROR, '[IRC] !!! Too many IRC client server elements' + '\n')
+			log.log(LOG_ERROR, 'Too many IRC client server elements')
 			raise Exception('Too many IRC client server elements')
 		if len(servs) < 1:
-			log(LOG_ERROR, '[IRC] !!! Missing IRC client server element' + '\n')
+			log.log(LOG_ERROR, 'Missing IRC client server element')
 			raise Exception('Missing IRC client server element')
 
 		serv = servs[0]
 
 		if not 'host' in serv.attrib:
-			log(LOG_ERROR, '[IRC] !!! IRC client server missing host attribute' + '\n')
+			log.log(LOG_ERROR, 'IRC client server missing host attribute')
 			raise Exception('IRC client server missing host attribute')
 		if not 'port' in serv.attrib:
-			log(LOG_ERROR, '[IRC] !!! IRC client server missing port attribute' + '\n')
+			log.log(LOG_ERROR, 'IRC client server missing port attribute')
 			raise Exception('IRC client server missing port attribute')
 
 		configs[name]['server'] = serv.attrib
@@ -54,23 +54,23 @@ def loadconfig(doc):
 
 		usrs = irccli.findall('./user')
 		if len(usrs) > 1:
-			log(LOG_ERROR, '[IRC] !!! Too many IRC client user elements' + '\n')
+			log.log(LOG_ERROR, 'Too many IRC client user elements')
 			raise Exception('Too many IRC client user elements')
 		if len(usrs) < 1:
-			log(LOG_ERROR, '[IRC] !!! Missing IRC client user elements' + '\n')
+			log.log(LOG_ERROR, 'Missing IRC client user elements')
 			raise Exception('Missing IRC client user elements')
 		usr = usrs[0]
 
 		configs[name]['user'] = usr.attrib
 
 		if not 'nick' in usr.attrib:
-			log(LOG_ERROR, '[IRC] !!! IRC client user missing nick attribute' + '\n')
+			log.log(LOG_ERROR, 'IRC client user missing nick attribute')
 			raise Exception('IRC client user missing nick attribute')
 		if not 'user' in usr.attrib:
-			log(LOG_ERROR, '[IRC] !!! IRC client user missing user attribute' + '\n')
+			log.log(LOG_ERROR, 'IRC client user missing user attribute')
 			raise Exception('IRC client user missing user attribute')
 		if not 'gecos' in usr.attrib:
-			log(LOG_ERROR, '[IRC] !!! IRC client user missing gecos attribute' + '\n')
+			log.log(LOG_ERROR, 'IRC client user missing gecos attribute')
 			raise Exception('IRC client user missing gecos attribute')
 
 		chans = irccli.findall('./channel')
@@ -85,16 +85,16 @@ def loadconfig(doc):
 			rels = chan.findall('./relay')
 			for rel in rels:
 				if not 'type' in rel.attrib:
-					log(LOG_ERROR, '[IRC] !!! IRC channel relay missing type attribute' + '\n')
-					raise Exception('[IRC] !!! IRC channel relay missing type attribute')
+					log.log(LOG_ERROR, 'IRC channel relay missing type attribute')
+					raise Exception('IRC channel relay missing type attribute')
 				if not 'name' in rel.attrib:
-					log(LOG_ERROR, '[IRC] !!! IRC channel relay missing name attribute' + '\n')
-					raise Exception('[IRC] !!! IRC channel relay missing name attribute')
+					log.log(LOG_ERROR, 'IRC channel relay missing name attribute')
+					raise Exception('IRC channel relay missing name attribute')
 				if not 'channel' in rel.attrib:
-					raise Exception('[IRC] !!! IRC channel relay missing channel attribute' + '\n')
-					raise Exception('[IRC] !!! IRC channel relay missing channel attribute')
+					raise Exception('IRC channel relay missing channel attribute')
+					raise Exception('IRC channel relay missing channel attribute')
 				if rel.attrib['type'] == 'irc' and rel.attrib['name'] == name and rel.attrib['channel'].lower() == cname.lower():
-					log(LOG_NORMAL, '[IRC] --- Ignoring attempt to relay IRC channel to itself\n')
+					log.log(LOG_INFO, 'Ignoring attempt to relay IRC channel to itself')
 					continue
 				if not cname.lower() in configs[name]['relays']:
 					configs[name]['relays'][cname.lower()] = []
@@ -224,7 +224,7 @@ class client:
 
 	def _doping(self):
 		if not self._pingrcvd:
-			log(LOG_NORMAL, '[IRC::' + self.name + '] --- Ping Timeout\n')
+			log.log(LOG_INFO, 'Ping Timeout', self)
 			self.disconnect('', False)
 			self._schedconnect()
 			return
@@ -246,12 +246,12 @@ class client:
 		if self._schedevs['conn'] != None:
 			return
 		self._schedevs['conn'] = self._addtimer(delay=freq, callback=self.connect)
-		log(LOG_NORMAL, '[IRC::' + self.name + '] --- Attempting to reconnect in ' + str(freq) + ' seconds\n')
+		log.log(LOG_INFO, 'Attempting to reconnect in ' + str(freq) + ' seconds', self)
 
 	def _doline(self, line):
 		if ((line == None) or (line == '')):
 			return
-		log(LOG_NORMAL, '[IRC::' + self.name + '] <-- ' + line + '\n')
+		log.log(LOG_DEBUG, '<-- ' + line, self)
 		msg = self._parse_raw(line)
 		self._execmsg(msg)
 
@@ -361,7 +361,7 @@ class client:
 	def _m_nick(self, msg):
 		if msg['source']['name'].lower() == self._myid['curnick'].lower():
 			self._myid['curnick'] = msg['params'][0]
-			log(LOG_NORMAL, '[IRC::' + self.name + '] --- Current nick changed to: ' + self._myid['curnick'] + '\n')
+			log.log(LOG_INFO, 'Current nick changed to: ' + self._myid['curnick'], self)
 
 	def _m_cap(self, msg):
 		if not self._iscap:
@@ -384,7 +384,7 @@ class client:
 					self._caps[cap] = True
 
 	def _m_error(self, msg):
-		log(LOG_NORMAL, '[IRC::' + self.name + '] --- Disconnected from ' + self._server['server'] + ', attemoting to reconnect\n')
+		log.log(LOG_INFO, 'Disconnected from ' + self._server['server'] + ', attemoting to reconnect', self)
 		self.disconnect('', False)
 		self._schedconnect(self._nexterrconnfreq)
 		self._nexterrconnfreq = self._nexterrconnfreq + self._errconnfreq
@@ -417,16 +417,16 @@ class client:
 			self._deltimer(self._schedevs['cap'])
 		self._schedevs['cap'] = None
 		self._schedevs['perform'] = None
-		log(LOG_NORMAL, '[IRC::' + self.name + '] --- Attempting to connect to ' + self._server['server'] + ' on port ' + str(self._server['port']) + '\n')
+		log.log(LOG_INFO, 'Attempting to connect to ' + self._server['server'] + ' on port ' + str(self._server['port']), self)
 
 		addrs = []
 
 		try:
 			addrs = socket.getaddrinfo(self._server['server'], self._server['port'], 0, 0, socket.IPPROTO_TCP)
 		except socket.gaierror as e:
-			log(LOG_ERROR, '[IRC::' + self.name + '] !!! Error connecting to ' + self._server['server'] + ': ' + e.strerror + '\n')
+			log.log(LOG_ERROR, 'Error connecting to ' + self._server['server'] + ': ' + e.strerror, self)
 		except:
-			log(LOG_ERROR, '[IRC::' + self.name + '] !!! Unknown error looking up host name ' + self._server['server'] + '\n')
+			log.log(LOG_ERROR, 'Unknown error looking up host name ' + self._server['server'], self)
 
 		if (len(addrs) < 1):
 			return
@@ -448,7 +448,7 @@ class client:
 			break
 
 		if s == None:
-			log(LOG_ERROR, '[IRC::' + self.name + '] !!! Error connecting to ' + self._server['server'] + '\n')
+			log.log(LOG_ERROR, 'Error connecting to ' + self._server['server'], self)
 			self._schedconnect()
 			return
 
@@ -456,7 +456,7 @@ class client:
 		self._sock = s
 		self._addsock()
 
-		log(LOG_NORMAL, '[IRC::' + self.name + '] --- Connected to ' + self._server['server'] + ' on port ' + str(self._server['port']) + '\n')
+		log.log(LOG_INFO, 'Connected to ' + self._server['server'] + ' on port ' + str(self._server['port']), self)
 
 		self._startping()
 		self._schedevs['cap'] = self._addtimer(delay=self._capdelay, callback=self._docapend)
@@ -506,11 +506,11 @@ class client:
 			print str(e)
 			sent = 0
 		if (sent == 0):
-			log(LOG_NORMAL, '[IRC::' + self.name + '] --- Disconnected from ' + self._server['server'] + ', attemoting to reconnect\n')
+			log.log(LOG_INFO, 'Disconnected from ' + self._server['server'] + ', attemoting to reconnect', self)
 			self.disconnect('', False)
 			self._schedconnect()
 			return
-		log(LOG_NORMAL, '[IRC::' + self.name + '] --> ' + line + '\n')
+		log.log(LOG_DEBUG, '--> ' + line, self)
 
 	def channel_add(self, channel):
 		if channel == None or channel == '':
@@ -527,7 +527,7 @@ class client:
 				self._relays[relchan.lower()].append(rel)
 		else:
 			self._relays[relchan.lower()] = [rel]
-		log(LOG_NORMAL, '[IRC::' + self.name + '] --- Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix:' + prefix + ')\n')
+		log.log(LOG_INFO, 'Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix:' + prefix + ')', self)
 
 	def doread(self, sock):
 		if self._sock != sock:
@@ -539,7 +539,7 @@ class client:
 			buf = ''
 
 		if (buf == ''):
-			log(LOG_NORMAL, '[IRC::' + self.name + '] --- Received no data from ' + self._server['server'] + ', attemoting to reconnect\n')
+			log.log(LOG_INFO, 'Received no data from ' + self._server['server'] + ', attemoting to reconnect', self)
 			self.disconnect('', False)
 			self._schedconnect()
 			return
@@ -559,7 +559,7 @@ class client:
 		return
 
 	def doerr(self, sock):
-		log(LOG_NORMAL, '[IRC::' + self.name + '] --- Exceptional condition from ' + self._server['server'] + ', attemoting to reconnect\n')
+		log.log(LOG_INFO, 'Exceptional condition from ' + self._server['server'] + ', attemoting to reconnect', self)
 		self.disconnect('', False)
 		self._schedconnect()
 		return
