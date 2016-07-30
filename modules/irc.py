@@ -527,7 +527,7 @@ class client:
 				self._relays[relchan.lower()].append(rel)
 		else:
 			self._relays[relchan.lower()] = [rel]
-		log.log(LOG_INFO, 'Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix:' + prefix + ')', self)
+		log.log(LOG_INFO, 'Added relay rule for channel ' + relchan + ' (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix:' + prefix + ')', self)
 
 	def doread(self, sock):
 		if self._sock != sock:
