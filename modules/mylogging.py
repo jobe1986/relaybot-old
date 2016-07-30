@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import logging.handlers
 import sys
 import time
 import json
@@ -81,9 +82,13 @@ logging.setLoggerClass(MyLogger)
 log = logging.getLogger('relaybot')
 
 loghandler = logging.StreamHandler(sys.stdout)
+logfilehandler = logging.handlers.RotatingFileHandler('logs/relaybot.log', backupCount=10)
 logformatter = UTCFormatter('[%(asctime)s] [%(modname)s/%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
 
 loghandler.setFormatter(logformatter)
+logfilehandler.setFormatter(logformatter)
 
 log.addHandler(loghandler)
+log.addHandler(logfilehandler)
+
 log.setLevel(logging.DEBUG)

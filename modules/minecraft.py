@@ -560,7 +560,7 @@ class client:
 			self._udpsock = None
 
 	def relay_add(self, relchan, type, name, channel, prefix):
-		rel = relay.RelayChannel(type, name, channel, prefix)
+		rel = relay.RelayTarget(type, name, channel, prefix)
 		if not rel in self._relays:
 			self._relays.append(rel)
 		print self._relays
