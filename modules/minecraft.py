@@ -259,7 +259,10 @@ class client:
 
 				log.log(LOG_DEBUG, 'RCON <-- id:' + str(idin) + ', type:' + str(type) + ', payload:' + payload, self)
 
-				self._rconhandle(idin, type, payload)
+				try:
+					self._rconhandle(idin, type, payload)
+				except Exception as e:
+					log.log(LOG_ERROR, 'Error handling RCON packet: ' + str(e))
 
 	def _doerr(self, sock):
 		return
