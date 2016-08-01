@@ -206,9 +206,11 @@ class client:
 			if not self._udpsock in self.sockets:
 				self.sockets.append(self._udpsock)
 
-	def _delsock(self):
-		if self._rconsock in sockets:
-			sockets.remove(self._rconsock)
+	def _delsock(self, doudp=False):
+		if self._rconsock in self.sockets:
+			self.sockets.remove(self._rconsock)
+		if doudp and self._udpsock in self.sockets:
+			self.sockets.remove(self._udpsock)
 
 	def _doread(self, sock):
 		if sock == self._udpsock:
@@ -422,7 +424,12 @@ class client:
 		log.log(LOG_DEBUG, 'RCON --> ' + binascii.hexlify(packet), self)
 		log.log(LOG_DEBUG, 'RCON --> id:' + str(id) + ', type:' + str(type) + ', payload:' + payload, self)
 
-		self._rconsock.send(packet)
+		try:
+			self._rconsock.send(packet)
+		except Exception as e:
+			log.log(LOG_ERROR, 'RCON Error sending to RCON: ' + str(e))
+			self.disconnect('', False)
+			self._schedconnect()
 
 	def _rconhandle(self, id, type, payload):
 		if id == -1 and type == 2:
@@ -473,7 +480,7 @@ class client:
 		self._rconid = self._rconid + 1
 
 		if callback != None:
-			self._rconcalls[id] = {'callback': callback, 'time': time.time(), 'args': args}
+			self._rconcalls[id] = {'callback': callback, 'time': time.time(), 'args': args, 'command': command}
 
 		self._rconsend(id, 2, command)
 
@@ -550,11 +557,15 @@ class client:
 
 		self._addsock()
 
+		log.log(LOG_INFO, 'Connected to rcon socket, waiting for logon confirmation')
+
 	def disconnect(self, reason = '', sendexit = True, closeudp = False):
+		self._delsock(closeudp)
+
 		if self._rconsock != None:
 			self._rconsock.close()
 		self._rconsock = None
-		self._rconid = -1
+		self._rconid = 0
 		self._rconconnected = False
 
 		if closeudp:
@@ -566,5 +577,4 @@ class client:
 		rel = relay.RelayTarget(type, name, channel, prefix)
 		if not rel in self._relays:
 			self._relays.append(rel)
-		print self._relays
 		log.log(LOG_INFO, 'Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix=' + prefix + ')', self)
