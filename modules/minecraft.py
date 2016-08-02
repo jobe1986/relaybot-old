@@ -87,7 +87,10 @@ def runconfig(timers):
 					udphost=conf['udp']['host'], udpport=conf['udp']['port'], schedobj=timers)
 
 		for rel in conf['relays']:
-			cli.relay_add(None, rel['type'], rel['name'], rel['channel'], rel['prefix'])
+			what = None
+			if 'what' in rel:
+				what = rel['what']
+			cli.relay_add(None, rel['type'], rel['name'], rel['channel'], rel['prefix'], what)
 
 		cli.connect()
 		clients[key] = cli
@@ -326,9 +329,12 @@ class client:
 					name = m.group(2)
 					ip = m.group(3)
 					self._callrelay('*** Connection from ' + ip + ' rejected (not whitelisted: ' + name + ')', jsonobj)
+		self._callrelay(None, jsonobj, what='udp')
 
-	def _callrelay(self, text, obj, type=None, name=None, channel=None):
+	def _callrelay(self, text, obj, type=None, name=None, channel=None, what=None):
 		for rel in self._relays:
+			if what != rel.what and rel.what != 'all':
+				continue
 			if type != None and rel.type.lower() != type.lower():
 				continue
 			if name != None and rel.name.lower() != name.lower():
@@ -336,9 +342,9 @@ class client:
 			if channel != None and rel.channel.lower() != channel.lower():
 				continue
 			rtext = text
-			if rel.prefix != '':
+			if rel.prefix != '' and text != None:
 				rtext = rel.prefix + ' ' + text
-			relay.call(rel.type, rel.name, rel.channel, (rtext, 'minecraft', self.name, obj))
+			relay.call(rel.type, rel.name, rel.channel, (rtext, 'minecraft', self.name, obj, what))
 
 	def _cleanformatting(self, text):
 		s = text.replace(u'§0', '')
@@ -573,8 +579,8 @@ class client:
 				self._udpsock.close()
 			self._udpsock = None
 
-	def relay_add(self, relchan, type, name, channel, prefix):
-		rel = relay.RelayTarget(type, name, channel, prefix)
+	def relay_add(self, relchan, type, name, channel, prefix, what=None, extra=None):
+		rel = relay.RelayTarget(type, name, channel, prefix, what, extra)
 		if not rel in self._relays:
 			self._relays.append(rel)
 		log.log(LOG_INFO, 'Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix=' + prefix + ')', self)

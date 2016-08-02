@@ -338,7 +338,7 @@ class client:
 						if prefix != '':
 							prefix = rel.prefix + ' '
 						text = prefix + '<' + msg['source']['name'] + '> ' + text
-					relay.call(rel.type, rel.name, rel.channel, (text, 'irc', self.name, msg))
+					relay.call(rel.type, rel.name, rel.channel, (text, 'irc', self.name, msg, 'irc'))
 
 	def _m_join(self, msg):
 		chan = msg['params'][0]
@@ -520,8 +520,8 @@ class client:
 		if self._connected and self._performdone:
 			self.send('JOIN ' + channel)
 
-	def relay_add(self, relchan, type, name, channel, prefix):
-		rel = relay.RelayTarget(type, name, channel, prefix)
+	def relay_add(self, relchan, type, name, channel, prefix, what=None, extra=None):
+		rel = relay.RelayTarget(type, name, channel, prefix, what, extra)
 		if relchan.lower() in self._relays:
 			if not rel in self._relays[relchan.lower()]:
 				self._relays[relchan.lower()].append(rel)

@@ -7,7 +7,7 @@ from modules.mylogging import *
 
 relaybindings = []
 RelayBinding = namedtuple('RelayBinding', ['type', 'name', 'callback'])
-RelayTarget = namedtuple('RelayTarget', ['type', 'name', 'channel', 'prefix'])
+RelayTarget = namedtuple('RelayTarget', ['type', 'name', 'channel', 'prefix', 'what', 'extra'])
 
 def bind(type, name, callback):
 	global relaybindings
@@ -25,6 +25,7 @@ def unbind(type, name, callback):
 
 def call(type, name, channel, args):
 	global relaybindings
+	log.log(LOG_DEBUG, 'Attempting to call relays (type:' + type + ', name:' + name + ', channel:' + channel + ', args:' + str(args) + ')')
 	for targ in relaybindings:
 		if targ.type == type and targ.name == name:
 			if targ.callback != None:
