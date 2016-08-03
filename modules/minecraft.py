@@ -90,7 +90,7 @@ def runconfig(timers):
 			what = None
 			if 'what' in rel:
 				what = rel['what']
-			cli.relay_add(None, rel['type'], rel['name'], rel['channel'], rel['prefix'], what)
+			cli.relay_add(rel['type'], rel['name'], rel['channel'], rel['prefix'], what)
 
 		cli.connect()
 		clients[key] = cli
@@ -331,20 +331,14 @@ class client:
 					self._callrelay('*** Connection from ' + ip + ' rejected (not whitelisted: ' + name + ')', jsonobj)
 		self._callrelay(None, jsonobj, what='udp')
 
-	def _callrelay(self, text, obj, type=None, name=None, channel=None, what=None):
+	def _callrelay(self, text, obj, channel=None, what=None):
 		for rel in self._relays:
-			if what != rel.what and rel.what != 'all':
-				continue
-			if type != None and rel.type.lower() != type.lower():
-				continue
-			if name != None and rel.name.lower() != name.lower():
-				continue
-			if channel != None and rel.channel.lower() != channel.lower():
+			if what != rel.extra['what'] and rel.extra['what'] != 'all':
 				continue
 			rtext = text
-			if rel.prefix != '' and text != None:
-				rtext = rel.prefix + ' ' + text
-			relay.call(rel.type, rel.name, rel.channel, (rtext, 'minecraft', self.name, obj, what))
+			if rel.extra['prefix'] != '' and text != None:
+				rtext = rel.extra['prefix'] + ' ' + text
+			relay.call(rtext, rel, relay.RelaySource('minecraft', self.name, channel, {}), {'obj': obj})
 
 	def _cleanformatting(self, text):
 		s = text.replace(u'§0', '')
@@ -463,16 +457,21 @@ class client:
 			self._cmdoutputres['players'] = re.compile(self._cmdoutputrep['players'])
 		m = self._cmdoutputres['players'].match(payload)
 		if m != None:
-			self._callrelay(m.group(1), None, rconcall['args'][0], rconcall['args'][1], rconcall['args'][2]['params'][0])
-			self._callrelay(m.group(2), None, rconcall['args'][0], rconcall['args'][1], rconcall['args'][2]['params'][0])
+			first = m.group(1)
+			if m.group(2) == '':
+				first = first[0:-1]
+			self._callrelay(first, None)
+			if m.group(2) != '':
+				self._callrelay(m.group(2), None)
 
-	def _relaycallback(self, channel, args):
+	def _relaycallback(self, data):
+		print data
 		if self._rconconnected:
-			if args[1] == 'irc':
-				if args[3]['params'][-1][0:8] == '?players':
-					self._rconcommand('list', self._cmd_players, (args[1], args[2], args[3]))
+			if data.source.type == 'irc':
+				if data.extra['msg']['params'][-1][0:8] == '?players':
+					self._rconcommand('list', self._cmd_players, (data.source.type, data.source.name, data.extra['msg']))
 					return
-			self._rconcommand('tellraw @a ' + json.dumps([args[0]]))
+			self._rconcommand('tellraw @a ' + json.dumps([data.text]))
 
 	def _rconexpirecalls(self):
 		for id in self._rconcalls.keys():
@@ -579,8 +578,8 @@ class client:
 				self._udpsock.close()
 			self._udpsock = None
 
-	def relay_add(self, relchan, type, name, channel, prefix, what=None, extra=None):
-		rel = relay.RelayTarget(type, name, channel, prefix, what, extra)
+	def relay_add(self, type, name, channel, prefix, what=None):
+		rel = relay.RelayTarget(type, name, channel, {'prefix': prefix, 'what': what})
 		if not rel in self._relays:
 			self._relays.append(rel)
 		log.log(LOG_INFO, 'Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix=' + prefix + ')', self)

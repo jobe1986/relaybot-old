@@ -7,7 +7,9 @@ from modules.mylogging import *
 
 relaybindings = []
 RelayBinding = namedtuple('RelayBinding', ['type', 'name', 'callback'])
-RelayTarget = namedtuple('RelayTarget', ['type', 'name', 'channel', 'prefix', 'what', 'extra'])
+RelayTarget = namedtuple('RelayTarget', ['type', 'name', 'channel', 'extra'])
+RelaySource = namedtuple('RelaySource', ['type', 'name', 'channel', 'extra'])
+RelayData = namedtuple('RelayData', ['text', 'source', 'target', 'extra'])
 
 def bind(type, name, callback):
 	global relaybindings
@@ -15,19 +17,27 @@ def bind(type, name, callback):
 	if not targ in relaybindings:
 		relaybindings.append(targ)
 		log.log(LOG_DEBUG, 'Bound relay (type:' + type + ', name:' + name + ')')
+		return targ
 
 def unbind(type, name, callback):
 	global relaybindings
-	targ = RelayBinding(type, name, callback)
-	if targ in relaybindings:
-		relaybindings.remove(targ)
+	for bind in relaybindings:
+		if bind.type != type:
+			continue
+		if bind.name != name:
+			continue
+		if bind.callback != callback:
+			continue
+		relaybindings.remove(bind)
 		log.log(LOG_DEBUG, 'Unbound relay (type:' + type + ', name:' + name + ')')
+		break
 
-def call(type, name, channel, args):
+def call(text, target, source, extra):
 	global relaybindings
-	log.log(LOG_DEBUG, 'Attempting to call relays (type:' + type + ', name:' + name + ', channel:' + channel + ', args:' + str(args) + ')')
-	for targ in relaybindings:
-		if targ.type == type and targ.name == name:
-			if targ.callback != None:
-				log.log(LOG_DEBUG, 'Calling relay (type:' + type + ', name:' + name + ')')
-				targ.callback(channel, args)
+	data = RelayData(text, source, target, extra)
+	log.log(LOG_DEBUG, 'Attempting to call relays (type:' + target.type + ', name:' + target.name + ', channel:' + target.channel + ', extra:' + str(extra) + ')')
+	for bind in relaybindings:
+		if bind.type == target.type and bind.name == target.name:
+			if bind.callback != None:
+				log.log(LOG_DEBUG, 'Calling relay (type:' + bind.type + ', name:' + bind.name + ')')
+				bind.callback(data)

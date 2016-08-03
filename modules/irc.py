@@ -328,17 +328,17 @@ class client:
 				for rel in self._relays[msg['params'][0].lower()]:
 					text = msg['params'][-1]
 					prefix = ''
-					if rel.prefix != '':
-						prefix = rel.prefix
+					if rel.extra['prefix'] != '':
+						prefix = rel.extra['prefix']
 					if text[0:7].lower() == '\x01action':
 						if text[-1] == '\x01':
 							text = text[:-1]
 						text = prefix + ' * ' + msg['source']['name'] + ' ' + text[8:]
 					else:
 						if prefix != '':
-							prefix = rel.prefix + ' '
+							prefix = rel.extra['prefix'] + ' '
 						text = prefix + '<' + msg['source']['name'] + '> ' + text
-					relay.call(rel.type, rel.name, rel.channel, (text, 'irc', self.name, msg, 'irc'))
+					relay.call(text, rel, relay.RelaySource('irc', self.name, msg['params'][0].lower(), {}), {'msg': msg})
 
 	def _m_join(self, msg):
 		chan = msg['params'][0]
@@ -389,10 +389,10 @@ class client:
 		self._schedconnect(self._nexterrconnfreq)
 		self._nexterrconnfreq = self._nexterrconnfreq + self._errconnfreq
 
-	def _relaycallback(self, channel, args):
+	def _relaycallback(self, data):
 		if self._connected and self._performdone:
-			if channel.lower() in self._channels:
-				self.send('PRIVMSG ' + channel + ' :' + args[0])
+			if data.target.channel.lower() in self._channels:
+				self.send('PRIVMSG ' + data.target.channel + ' :' + data.text)
 
 	def bindmsg(self, msg, callback):
 		if not msg.lower() in self._msgbinds:
@@ -520,8 +520,8 @@ class client:
 		if self._connected and self._performdone:
 			self.send('JOIN ' + channel)
 
-	def relay_add(self, relchan, type, name, channel, prefix, what=None, extra=None):
-		rel = relay.RelayTarget(type, name, channel, prefix, what, extra)
+	def relay_add(self, relchan, type, name, channel, prefix, what=None):
+		rel = relay.RelayTarget(type, name, channel, {'prefix': prefix, 'what': what})
 		if relchan.lower() in self._relays:
 			if not rel in self._relays[relchan.lower()]:
 				self._relays[relchan.lower()].append(rel)
