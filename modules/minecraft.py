@@ -331,9 +331,15 @@ class client:
 					self._callrelay('*** Connection from ' + ip + ' rejected (not whitelisted: ' + name + ')', jsonobj)
 		self._callrelay(None, jsonobj, what='udp')
 
-	def _callrelay(self, text, obj, channel=None, what=None):
+	def _callrelay(self, text, obj, type=None, name=None, channel=None, what=None):
 		for rel in self._relays:
 			if what != rel.extra['what'] and rel.extra['what'] != 'all':
+				continue
+			if type != None and rel.type != type:
+				continue
+			if name != None and rel.name != name:
+				continue
+			if channel != None and rel.channel != channel.lower():
 				continue
 			rtext = text
 			if rel.extra['prefix'] != '' and text != None:
@@ -460,16 +466,16 @@ class client:
 			first = m.group(1)
 			if m.group(2) == '':
 				first = first[0:-1]
-			self._callrelay(first, None)
+			self._callrelay(first, None, rconcall['args'][0].type, rconcall['args'][0].name, rconcall['args'][0].channel)
 			if m.group(2) != '':
-				self._callrelay(m.group(2), None)
+				self._callrelay(m.group(2), None, rconcall['args'][0].type, rconcall['args'][0].name, rconcall['args'][0].channel)
 
 	def _relaycallback(self, data):
 		print data
 		if self._rconconnected:
 			if data.source.type == 'irc':
 				if data.extra['msg']['params'][-1][0:8] == '?players':
-					self._rconcommand('list', self._cmd_players, (data.source.type, data.source.name, data.extra['msg']))
+					self._rconcommand('list', self._cmd_players, (data.source, data.extra['msg']))
 					return
 			self._rconcommand('tellraw @a ' + json.dumps([data.text]))
 
