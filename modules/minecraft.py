@@ -250,26 +250,35 @@ class client:
 
 				self._rconbuf = self._rconbuf + buf
 
-				if len(self._rconbuf) < 4:
-					return
+				while True:
+					if len(self._rconbuf) < 4:
+						break
 
-				size = unpack('<i', self._rconbuf[0:4])
-				size = size[0]
+					size = unpack('<i', self._rconbuf[0:4])
+					size = size[0]
 				
-				if len(self._rconbuf) < size + 4:
-					return
+					if len(self._rconbuf) < size + 4:
+						break
 
-				packet = self._rconbuf[4:size + 4]
-				self._rconbuf = self._rconbuf[size + 5:]
+					log.log(LOG_DEBUG, 'RCON Parsing packet: ' + binascii.hexlify(self._rconbuf[:size + 4]))
+					packet = self._rconbuf[4:size + 4]
+					self._rconbuf = self._rconbuf[size + 5:]
 
-				(idin, type, payload, padding) = unpack('<ii' + str(size-10) + 's2s', packet)
+					if size == 10:
+						payload = ''
+						(idin, type, padding) = unpack('<ii2s', packet)
+					elif size > 10:
+						(idin, type, payload, padding) = unpack('<ii' + str(size-10) + 's2s', packet)
+					else:
+						log.log(LOG_DEBUG, 'RCON Packet with erroneous length (' + str(size) + '): ' + binascii.hexlify(packet))
+						continue
 
-				log.log(LOG_DEBUG, 'RCON <-- id:' + str(idin) + ', type:' + str(type) + ', payload:' + payload, self)
+					log.log(LOG_DEBUG, 'RCON <-- id:' + str(idin) + ', type:' + str(type) + ', payload:' + payload, self)
 
-				try:
-					self._rconhandle(idin, type, payload)
-				except Exception as e:
-					log.log(LOG_ERROR, 'Error handling RCON packet: ' + str(e))
+					try:
+						self._rconhandle(idin, type, payload)
+					except Exception as e:
+						log.log(LOG_ERROR, 'Error handling RCON packet: ' + str(e))
 
 	def _doerr(self, sock):
 		return
