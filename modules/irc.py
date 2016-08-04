@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import socket
-import sched
-import time
-import sys
+import socket, sched, time, sys
 
 from core.mylogging import *
 from core.mysocket import mysocket

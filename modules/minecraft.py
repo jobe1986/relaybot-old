@@ -1,19 +1,15 @@
 # -*- coding: utf-8 -*- 
 
-import socket
-import sched
-import time
-import sys
-import json
-import re
-import binascii
-import time
+import socket, sched, time, sys, json, re, binascii
 from struct import pack, unpack
+from collections import namedtuple
 
 from core.mysocket import mysocket
 
 from core.mylogging import *
 import core.relay as relay
+
+RConPacket = namedtuple('RConPacket', ['id', 'type', 'payload'])
 
 configs = {}
 clients = {}
@@ -283,9 +279,9 @@ class client:
 
 	def _handlejson(self, jsonobj):
 		if jsonobj['logger'] == 'crontab.overviewer':
-			self._callrelay(jsonobj['message'], jsonobj)
+			self._callrelay(jsonobj['message'], jsonobj, schannel='udp')
 		elif jsonobj['logger'] == 'crontab.overviewerpoi':
-			self._callrelay(jsonobj['message'], jsonobj)
+			self._callrelay(jsonobj['message'], jsonobj, schannel='udp')
 		elif jsonobj['logger'] == 'net.minecraft.server.MinecraftServer':
 			matched = False
 			for key in self._regp.keys():
@@ -316,13 +312,13 @@ class client:
 					text = self._formatmctoirc(text)
 					if name == 'Rcon':
 						continue
-					self._callrelay(npre + name + nsuf + ' ' + text, jsonobj)
+					self._callrelay(npre + name + nsuf + ' ' + text, jsonobj, schannel='udp')
 				else:
-					self._callrelay(self._formatmctoirc(m.group(0)), jsonobj)
+					self._callrelay(self._formatmctoirc(m.group(0)), jsonobj, schannel='udp')
 				break
 			if not matched:
 				if self._isdeath(jsonobj['message']):
-					self._callrelay(self._formatmctoirc(jsonobj['message']), jsonobj)
+					self._callrelay(self._formatmctoirc(jsonobj['message']), jsonobj, schannel='udp')
 		elif jsonobj['logger'] == 'mg':
 			for key in self._mgregp.keys():
 				if not key in self._mgregs:
@@ -334,10 +330,10 @@ class client:
 				if key == 'whitelist':
 					name = m.group(2)
 					ip = m.group(3)
-					self._callrelay('*** Connection from ' + ip + ' rejected (not whitelisted: ' + name + ')', jsonobj)
-		self._callrelay(None, jsonobj, what='udp')
+					self._callrelay('*** Connection from ' + ip + ' rejected (not whitelisted: ' + name + ')', jsonobj, schannel='udp')
+		self._callrelay(None, jsonobj, what='udp', schannel='udp')
 
-	def _callrelay(self, text, obj, type=None, name=None, channel=None, what=None):
+	def _callrelay(self, text, obj, type=None, name=None, channel=None, what=None, schannel=''):
 		for rel in self._relays:
 			if what != rel.extra['what'] and rel.extra['what'] != 'all':
 				continue
@@ -350,7 +346,7 @@ class client:
 			rtext = text
 			if rel.extra['prefix'] != '' and text != None:
 				rtext = rel.extra['prefix'] + ' ' + text
-			relay.call(rtext, rel, relay.RelaySource('minecraft', self.name, channel, {}), {'obj': obj})
+			relay.call(rtext, rel, relay.RelaySource('minecraft', self.name, schannel, {}), {'obj': obj})
 
 	def _cleanformatting(self, text):
 		s = text.replace(u'§0', '')
@@ -470,11 +466,12 @@ class client:
 		m = self._cmdoutputres['players'].match(payload)
 		if m != None:
 			first = m.group(1)
+			rcon = RConPacket(id, type, payload)
 			if m.group(2) == '':
 				first = first[0:-1]
-			self._callrelay(first, None, rconcall['args'][0].type, rconcall['args'][0].name, rconcall['args'][0].channel)
+			self._callrelay(first, rcon, rconcall['args'][0].type, rconcall['args'][0].name, rconcall['args'][0].channel, schannel='rcon')
 			if m.group(2) != '':
-				self._callrelay(m.group(2), None, rconcall['args'][0].type, rconcall['args'][0].name, rconcall['args'][0].channel)
+				self._callrelay(m.group(2), rcon, rconcall['args'][0].type, rconcall['args'][0].name, rconcall['args'][0].channel, schannel='rcon')
 
 	def _relaycallback(self, data):
 		print data
