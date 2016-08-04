@@ -1,10 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import sys
-import socket, select
-import time
-import sched
+import sys, socket, select, time, sched
 
 import core.modules as modules
 from core.config import *
@@ -17,10 +14,12 @@ def doselect(timeout):
 	try:
 		selread, selwrite, selerr = select.select(sockets, [], sockets, timeout)
 	except KeyboardInterrupt as e:
+		log.log(LOG_INFO, 'Received keyboard interrupt, shutting down.')
 		for sock in sockets:
 			sock.dodisconnect('Shutting down (Ctrl+C)')
 		exit()
-	except:
+	except Exception as e:
+		log.log(LOG_CRITICAL, str(e))
 		exit()
 	for sock in selerr:
 		sock.doerr()
@@ -42,6 +41,7 @@ def main():
 try:
 	main()
 except KeyboardInterrupt as e:
+	log.log(LOG_INFO, 'Received keyboard interrupt, shutting down.')
 	sockets = modules.getsockets()
 	for sock in sockets:
 		sock.dodisconnect('Shutting down (Ctrl+C)')

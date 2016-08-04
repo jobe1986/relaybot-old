@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import logging
-import logging.handlers
-import sys
-import time
-import json
+import logging, logging.handlers, sys, time, json
 
 #logging.CRITICAL = 50
 #logging.ERROR = 40
@@ -82,7 +78,7 @@ logging.setLoggerClass(MyLogger)
 log = logging.getLogger('relaybot')
 
 loghandler = logging.StreamHandler(sys.stdout)
-logfilehandler = logging.handlers.TimedRotatingFileHandler('logs/relaybot.log', when='d', interval=1, backupCount=10, utc=True)
+logfilehandler = logging.handlers.TimedRotatingFileHandler('logs/relaybot.log', when='D', interval=1, backupCount=10, utc=True)
 logformatter = UTCFormatter('[%(asctime)s] [%(modname)s/%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
 
 loghandler.setFormatter(logformatter)
