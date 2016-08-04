@@ -6,17 +6,14 @@ import socket, select
 import time
 import sched
 
-
-from modules.config import *
-from modules.mylogging import *
-
-import modules.irc as irc
-import modules.minecraft as minecraft
+import core.modules as modules
+from core.config import *
+from core.mylogging import *
 
 timers = None
 
 def doselect(timeout):
-	sockets = irc.client.sockets + minecraft.client.sockets
+	sockets = modules.getsockets()
 	try:
 		selread, selwrite, selerr = select.select(sockets, [], sockets, timeout)
 	except KeyboardInterrupt as e:
@@ -45,11 +42,11 @@ def main():
 try:
 	main()
 except KeyboardInterrupt as e:
-	sockets = irc.client.sockets + minecraft.client.sockets
+	sockets = modules.getsockets()
 	for sock in sockets:
 		sock.dodisconnect('Shutting down (Ctrl+C)')
 except Exception as e:
 	log.log(LOG_CRITICAL, str(e))
-	sockets = irc.client.sockets + minecraft.client.sockets
+	sockets = modules.getsockets()
 	for sock in sockets:
 		sock.dodisconnect('Exception: ' + str(e))

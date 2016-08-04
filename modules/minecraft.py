@@ -9,10 +9,11 @@ import re
 import binascii
 import time
 from struct import pack, unpack
-from modules.mysocket import mysocket
 
-from modules.mylogging import *
-import modules.relay as relay
+from core.mysocket import mysocket
+
+from core.mylogging import *
+import core.relay as relay
 
 configs = {}
 clients = {}
@@ -70,6 +71,7 @@ def loadconfig(doc):
 			if not 'prefix' in relnew:
 				relnew['prefix'] = '[' + name + ']'
 			configs[name]['relays'].append(relnew)
+	print "loaded config"
 
 def runconfig(timers):
 	global configs
@@ -94,6 +96,10 @@ def runconfig(timers):
 
 		cli.connect()
 		clients[key] = cli
+	print "ran config"
+
+def sockets():
+	return client.sockets
 
 class client:
 	sockets = []

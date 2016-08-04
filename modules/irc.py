@@ -5,9 +5,9 @@ import sched
 import time
 import sys
 
-from modules.mylogging import *
-from modules.mysocket import mysocket
-import modules.relay as relay
+from core.mylogging import *
+from core.mysocket import mysocket
+import core.relay as relay
 
 configs = {}
 clients = {}
@@ -126,6 +126,9 @@ def runconfig(timers):
 
 		cli.connect()
 		clients[key] = cli
+
+def sockets():
+	return client.sockets
 
 class client:
 	sockets = []

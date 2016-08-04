@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Copy to config.xml and then edit -->
 <config>
+	<!--
+		Modules config:
+		Loads the named modules.
+
+		Currently only the irc and minecraft modules exist	
+	-->
+	<module name="irc" />
+	<module name="minecraft" />
+
 	<irc name="IRCNetwork">
 		<server host="irc.server.tld" port="6667" password="" />
 		<user nick="RelayBot" user="RelayBot" gecos="Simple Relay Bot" />
@@ -8,6 +17,7 @@
 			<relay type="minecraft" name="Minecraft" channel="" prefix="[IRC]" />
 		</channel>
 	</irc>
+
 	<minecraft name="Minecraft">
 		<!--
 			This module requires your minecraft server have rcon enabled.
