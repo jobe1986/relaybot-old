@@ -109,7 +109,6 @@ def runconfig(timers):
 
 		cli.connect()
 		clients[key] = cli
-	print "ran config"
 
 def sockets():
 	return client.sockets
@@ -498,7 +497,6 @@ class client:
 				self._callrelay(m.group(2), rcon, rconcall['args'][0].type, rconcall['args'][0].name, rconcall['args'][0].channel, schannel='rcon')
 
 	def _relaycallback(self, data):
-		print data
 		if self._rconconnected:
 			if data.source.type == 'irc':
 				if data.extra['msg']['params'][-1][0:8] == '?players':

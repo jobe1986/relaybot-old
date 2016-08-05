@@ -537,7 +537,6 @@ class client:
 				text = ''
 			sent = self._sock.send(text + '\r\n')
 		except Exception as e:
-			print str(e)
 			sent = 0
 		if (sent == 0):
 			log.log(LOG_INFO, 'Disconnected from ' + self._server['server'] + ', attemoting to reconnect', self)
