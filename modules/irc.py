@@ -147,12 +147,13 @@ class client:
 		self._caps = {} # key == cap, true == ack
 		self._sched = schedobj
 		self._schedpri = schedpri
-		self._schedevs = {'cap': None, 'conn': None, 'ping': None, 'perform': None}
+		self._schedevs = {'cap': None, 'conn': None, 'ping': None, 'perform': None, 'nick': None}
 		self._myid = {'nick': nick, 'user': user, 'gecos': gecos, 'curnick': nick, 'curnicknum': -1}
 		self._server = {'server': server, 'curserver': server, 'port': port, 'password': serverpassword}
 		self._msgbinds = {}
 		self._ircbuf = ''
 		self._performdone = False
+		self._nickdelay = 60
 		self._performs = performs
 		self._channels = {}
 		self._relays = {}
@@ -318,9 +319,12 @@ class client:
 			self._schedevs['perform'] = self._addtimer(delay=3, callback=self._perform)
 
 	def _m_433(self, msg):
-		self._myid['curnicknum'] = self._myid['curnicknum'] + 1
-		self._myid['curnick'] = self._myid['nick'] + str(self._myid['curnicknum'])
-		self.send('NICK ' + self._myid['curnick'])
+		if msg['params'][0].lower() != self._myid['curnick'].lower():
+			self._myid['curnicknum'] = self._myid['curnicknum'] + 1
+			self._myid['curnick'] = self._myid['nick'] + str(self._myid['curnicknum'])
+			self.send('NICK ' + self._myid['curnick'])
+			if self._schedevs['nick'] == None:
+				self._schedevs['nick'] = self._addtimer(delay=self._nickdelay, callback=self._renick)
 
 	def _m_privmsg(self, msg):
 		if msg['params'][0].lower() in self._channels:
@@ -361,7 +365,12 @@ class client:
 	def _m_nick(self, msg):
 		if msg['source']['name'].lower() == self._myid['curnick'].lower():
 			self._myid['curnick'] = msg['params'][0]
+			if self._myid['curnick'].lower() == self._myid['nick'].lower():
+				self._myid['curnicknum'] = -1
 			log.log(LOG_INFO, 'Current nick changed to: ' + self._myid['curnick'], self)
+			if self._schedevs['nick'] != None:
+				self._deltimer(self._schedevs['nick'])
+				self._schedevs['nick'] = None
 
 	def _m_cap(self, msg):
 		if not self._iscap:
@@ -388,6 +397,10 @@ class client:
 		self.disconnect('', False)
 		self._schedconnect(self._nexterrconnfreq)
 		self._nexterrconnfreq = self._nexterrconnfreq + self._errconnfreq
+
+	def _renick(self):
+		self.send('NICK ' + self._myid['nick'])
+		self._schedevs['nick'] = self._addtimer(delay=self._nickdelay, callback=self._renick)
 
 	def _relaycallback(self, data):
 		if self._connected and self._performdone:
@@ -455,6 +468,7 @@ class client:
 		self._connected = True
 		self._sock = s
 		self._addsock()
+		self._myid['curnick'] = self._myid['nick']
 
 		log.log(LOG_INFO, 'Connected to ' + self._server['server'] + ' on port ' + str(self._server['port']), self)
 
@@ -488,6 +502,8 @@ class client:
 		self._performdone = False
 		self._iscap = False
 		self._disconnecting = False
+		for ev in self._schedevs:
+			self._deltimer(self._schedevs[ev])
 		for chan in self._channels.keys():
 			self._channels[chan] = False
 		return
