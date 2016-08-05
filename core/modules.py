@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # RelayBot - Simple Multi-protocol Relay Bot, core/modules.py
 #
 # Copyright (C) 2016 Matthew Beeching
@@ -16,8 +18,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with RelayBot.  If not, see <http://www.gnu.org/licenses/>.
-
-# -*- coding: utf-8 -*-
 
 from collections import namedtuple
 
