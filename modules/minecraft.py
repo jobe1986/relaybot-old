@@ -23,7 +23,7 @@ import socket, sched, time, sys, json, re, binascii
 from struct import pack, unpack
 from collections import namedtuple
 
-from core.rbsocket import rbsocket
+import core.rbsocket as rbsocket
 from core.rblogging import *
 import core.relay as relay
 
@@ -216,22 +216,20 @@ class client:
 
 	def _addsock(self):
 		if self._rconsock != None:
-			self._rconsock.setdoread(self._doread)
-			self._rconsock.setdoerr(self._doerr)
-			self._rconsock.setdodisconnect(self._dodisconnect)
 			if not self._rconsock in self.sockets:
+				rbsocket.bindsockcallbacks(self._rconsock, self._dodisconnect, self._doerr, self._doread)
 				self.sockets.append(self._rconsock)
 		if self._udpsock != None:
-			self._udpsock.setdoread(self._doread)
-			self._udpsock.setdoerr(self._doerr)
-			self._udpsock.setdodisconnect(self._dodisconnect)
 			if not self._udpsock in self.sockets:
+				rbsocket.bindsockcallbacks(self._udpsock, self._dodisconnect, self._doerr, self._doread)
 				self.sockets.append(self._udpsock)
 
 	def _delsock(self, doudp=False):
 		if self._rconsock in self.sockets:
+			rbsocket.unbindsockcallbacks(self._rconsock)
 			self.sockets.remove(self._rconsock)
 		if doudp and self._udpsock in self.sockets:
+			rbsocket.unbindsockcallbacks(self._udpsock)
 			self.sockets.remove(self._udpsock)
 
 	def _doread(self, sock):
@@ -543,7 +541,7 @@ class client:
 
 			af, socktype, proto, canonname, sa = addrs[0]
 			try:
-				s = rbsocket(af, socktype, proto)
+				s = rbsocket.rbsocket(af, socktype, proto)
 			except Exception as e:
 				log.log(LOG_ERROR, 'Error creating UDP socket: ' + str(e), self)
 				return
@@ -569,7 +567,7 @@ class client:
 		for addr in addrs:
 			af, socktype, proto, canonname, sa = addr
 			try:
-				s = rbsocket(af, socktype, proto)
+				s = rbsocket.rbsocket(af, socktype, proto)
 			except Exception as e:
 				s = None
 				continue

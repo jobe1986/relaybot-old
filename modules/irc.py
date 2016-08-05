@@ -22,7 +22,7 @@
 import socket, sched, time, sys
 
 from core.rblogging import *
-from core.rbsocket import rbsocket
+import core.rbsocket as rbsocket
 import core.relay as relay
 
 configs = {}
@@ -224,14 +224,13 @@ class client:
 	def _addsock(self):
 		if self._sock == None:
 			return
-		self._sock.setdoread(self.doread)
-		self._sock.setdoerr(self.doerr)
-		self._sock.setdodisconnect(self.dodisconnect)
 		if not self._sock in self.sockets:
+			rbsocket.bindsockcallbacks(self._sock, self.dodisconnect, self.doerr, self.doread)
 			self.sockets.append(self._sock)
 
 	def _delsock(self):
 		if self._sock in self.sockets:
+			rbsocket.unbindsockcallbacks(self._sock)
 			self.sockets.remove(self._sock)
 
 	def _startping(self):
@@ -467,7 +466,7 @@ class client:
 		for addr in addrs:
 			af, socktype, proto, canonname, sa = addr
 			try:
-				s = rbsocket(af, socktype, proto)
+				s = rbsocket.rbsocket(af, socktype, proto)
 			except socket.error as e:
 				s = None
 				continue

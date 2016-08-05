@@ -23,6 +23,7 @@
 import sys, socket, select, time, sched
 
 import core.modules as modules
+import core.rbsocket as rbsocket
 from core.config import *
 from core.rblogging import *
 
@@ -35,15 +36,15 @@ def doselect(timeout):
 	except KeyboardInterrupt as e:
 		log.log(LOG_INFO, 'Received keyboard interrupt, shutting down.')
 		for sock in sockets:
-			sock.dodisconnect('Shutting down (Ctrl+C)')
+			rbsocket.dodisconnect(sock, 'Shutting down (Ctrl+C)')
 		exit()
 	except Exception as e:
 		log.log(LOG_CRITICAL, str(e))
 		exit()
 	for sock in selerr:
-		sock.doerr()
+		rbsocket.doerr(sock)
 	for sock in selread:
-		sock.doread()
+		rbsocket.doread(sock)
 
 def main():
 	global timers
@@ -63,9 +64,9 @@ except KeyboardInterrupt as e:
 	log.log(LOG_INFO, 'Received keyboard interrupt, shutting down.')
 	sockets = modules.getsockets()
 	for sock in sockets:
-		sock.dodisconnect('Shutting down (Ctrl+C)')
+		rbsocket.dodisconnect(sock, 'Shutting down (Ctrl+C)')
 except Exception as e:
 	log.log(LOG_CRITICAL, str(e))
 	sockets = modules.getsockets()
 	for sock in sockets:
-		sock.dodisconnect('Exception: ' + str(e))
+		rbsocket.dodisconnect(sock, 'Exception: ' + str(e))

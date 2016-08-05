@@ -22,6 +22,55 @@
 import socket
 
 from core.rblogging import *
+from collections import namedtuple
+
+SockCallbacks = namedtuple('SockCallbacks', ['dodisconnect', 'doerr', 'doread'])
+
+socks = {}
+
+def dodisconnect(sock, msg = None):
+	global socks
+
+	if hasattr(sock, 'dodisconnect'):
+		sock.dodisconnect(msg)
+	elif sock in socks:
+		if socks[sock].dodisconnect != None:
+			socks[sock].dodisconnect(sock, msg)
+
+def doerr(sock):
+	global socks
+
+	if hasattr(sock, 'doerr'):
+		sock.doerr()
+	elif sock in socks:
+		if socks[sock].doerr != None:
+			socks[sock].doerr(sock)
+
+def doread(sock):
+	global socks
+
+	if hasattr(sock, 'doread'):
+		sock.doread()
+	elif sock in socks:
+		if socks[sock].doread != None:
+			socks[sock].doread(sock)
+
+def bindsockcallbacks(sock, dodisconnect=None, doerr=None, doread=None):
+	global socks
+
+	if isinstance(sock, rbsocket):
+		sock.setdoread(doread)
+		sock.setdoerr(doerr)
+		sock.setdodisconnect(dodisconnect)
+	else:
+		sockcalls = SockCallbacks(dodisconnect, doerr, doread)
+		socks[sock] = sockcalls
+
+def unbindsockcallbacks(sock):
+	global socks
+
+	if sock in socks:
+		socks.pop(sock)
 
 class rbsocket(socket.socket):
 	def __init__(self, *p, **d):
