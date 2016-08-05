@@ -2,8 +2,8 @@
 
 import socket, sched, time, sys
 
-from core.mylogging import *
-from core.mysocket import mysocket
+from core.rblogging import *
+from core.rbsocket import rbsocket
 import core.relay as relay
 
 configs = {}
@@ -448,7 +448,7 @@ class client:
 		for addr in addrs:
 			af, socktype, proto, canonname, sa = addr
 			try:
-				s = mysocket(af, socktype, proto)
+				s = rbsocket(af, socktype, proto)
 			except socket.error as e:
 				s = None
 				continue

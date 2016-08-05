@@ -2,7 +2,7 @@
 
 from xml.etree.ElementTree import ElementTree
 
-from core.mylogging import *
+from core.rblogging import *
 import core.modules as modules
 
 def loadconfig(timers, file = 'config.xml'):

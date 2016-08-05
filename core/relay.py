@@ -3,7 +3,7 @@
 import sys
 from collections import namedtuple
 
-from core.mylogging import *
+from core.rblogging import *
 
 relaybindings = []
 RelayBinding = namedtuple('RelayBinding', ['type', 'name', 'callback'])

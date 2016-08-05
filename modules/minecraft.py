@@ -4,9 +4,8 @@ import socket, sched, time, sys, json, re, binascii
 from struct import pack, unpack
 from collections import namedtuple
 
-from core.mysocket import mysocket
-
-from core.mylogging import *
+from core.rbsocket import rbsocket
+from core.rblogging import *
 import core.relay as relay
 
 RConPacket = namedtuple('RConPacket', ['id', 'type', 'payload'])
@@ -67,7 +66,6 @@ def loadconfig(doc):
 			if not 'prefix' in relnew:
 				relnew['prefix'] = '[' + name + ']'
 			configs[name]['relays'].append(relnew)
-	print "loaded config"
 
 def runconfig(timers):
 	global configs
@@ -526,7 +524,7 @@ class client:
 
 			af, socktype, proto, canonname, sa = addrs[0]
 			try:
-				s = mysocket(af, socktype, proto)
+				s = rbsocket(af, socktype, proto)
 			except Exception as e:
 				log.log(LOG_ERROR, 'Error creating UDP socket: ' + str(e), self)
 				return
@@ -552,7 +550,7 @@ class client:
 		for addr in addrs:
 			af, socktype, proto, canonname, sa = addr
 			try:
-				s = mysocket(af, socktype, proto)
+				s = rbsocket(af, socktype, proto)
 			except Exception as e:
 				s = None
 				continue

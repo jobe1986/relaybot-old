@@ -2,14 +2,14 @@
 
 import socket
 
-from core.mylogging import *
+from core.rblogging import *
 
-class mysocket(socket.socket):
+class rbsocket(socket.socket):
 	def __init__(self, *p, **d):
 		self._doread = None
 		self._doerr = None
 		self._dodisconnect = None
-		super( mysocket, self ).__init__(*p, **d)
+		super( rbsocket, self ).__init__(*p, **d)
 
 	def doread(self):
 		if self._doread != None:

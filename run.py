@@ -5,7 +5,7 @@ import sys, socket, select, time, sched
 
 import core.modules as modules
 from core.config import *
-from core.mylogging import *
+from core.rblogging import *
 
 timers = None
 
