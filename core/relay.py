@@ -54,7 +54,7 @@ def unbind(type, name, callback):
 def call(text, target, source, extra):
 	global relaybindings
 	data = RelayData(text, source, target, extra)
-	log.log(LOG_DEBUG, 'Attempting to call relays (' + str(data) + ')')
+	log.log(LOG_DEBUG, 'Attempting to call relays (type:' + target.type + ', name:' + target.name + ', channel:' + target.channel + ')')
 	for bind in relaybindings:
 		if bind.type == target.type and bind.name == target.name:
 			if bind.callback != None:
