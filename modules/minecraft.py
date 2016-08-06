@@ -46,7 +46,7 @@ def loadconfig(doc):
 			raise Exception('Duplicate Minecraft config name')
 
 		name = cli.attrib['name']
-		configs[name] = {'rcon': {'host': '', 'port': '', 'password': ''}, 'udp': {'host': '', 'port': ''}}
+		configs[name] = {'rcon': {'host': '', 'port': '', 'password': ''}, 'udp': {'host': '', 'port': ''}, 'relays': {}}
 
 		rcon = cli.find('./rcon')
 		if not 'host' in rcon.attrib:
@@ -66,8 +66,49 @@ def loadconfig(doc):
 			raise Exception('Minrcraft client udp config missing port attribute')
 		configs[name]['udp'] = udp.attrib
 
+		rels = rcon.findall('./relay')
+		for rel in rels:
+			if not 'type' in rel.attrib:
+				log.log(LOG_ERROR, 'Minecraft rcon relay missing type attribute')
+				raise Exception('Minecraft rcon relay missing type attribute')
+			if not 'name' in rel.attrib:
+				log.log(LOG_ERROR, 'Minecraft rcon relay missing name attribute')
+				raise Exception('Minecraft rcon relay missing name attribute')
+			if not 'channel' in rel.attrib:
+				log.log(LOG_ERROR, 'Minecraft rcon relay missing channel attribute')
+				raise Exception('Minecraft rcon relay missing channel attribute')
+			if rel.attrib['type'] == 'minecraft' and rel.attrib['name'] == name:
+				log.log(LOG_INFO, 'Ignoring attempt to relay Minecraft to itself')
+				continue
+			relnew = rel.attrib
+			if not 'prefix' in relnew:
+				relnew['prefix'] = '[' + name + ']'
+			if not 'rcon' in configs[name]['relays']:
+				configs[name]['relays']['rcon'] = []
+			configs[name]['relays']['rcon'].append(relnew)
+
+		rels = udp.findall('./relay')
+		for rel in rels:
+			if not 'type' in rel.attrib:
+				log.log(LOG_ERROR, 'Minecraft udp relay missing type attribute')
+				raise Exception('Minecraft udp relay missing type attribute')
+			if not 'name' in rel.attrib:
+				log.log(LOG_ERROR, 'Minecraft udp relay missing name attribute')
+				raise Exception('Minecraft udp relay missing name attribute')
+			if not 'channel' in rel.attrib:
+				log.log(LOG_ERROR, 'Minecraft udp relay missing channel attribute')
+				raise Exception('Minecraft udp relay missing channel attribute')
+			if rel.attrib['type'] == 'minecraft' and rel.attrib['name'] == name:
+				log.log(LOG_INFO, 'Ignoring attempt to relay Minecraft to itself')
+				continue
+			relnew = rel.attrib
+			if not 'prefix' in relnew:
+				relnew['prefix'] = '[' + name + ']'
+			if not 'udp' in configs[name]['relays']:
+				configs[name]['relays']['udp'] = []
+			configs[name]['relays']['udp'].append(relnew)
+
 		rels = cli.findall('./relay')
-		configs[name]['relays'] = []
 		for rel in rels:
 			if not 'type' in rel.attrib:
 				log.log(LOG_ERROR, 'Minecraft channel relay missing type attribute')
@@ -84,7 +125,9 @@ def loadconfig(doc):
 			relnew = rel.attrib
 			if not 'prefix' in relnew:
 				relnew['prefix'] = '[' + name + ']'
-			configs[name]['relays'].append(relnew)
+			if not '' in configs[name]['relays']:
+				configs[name]['relays'][''] = []
+			configs[name]['relays'][''].append(relnew)
 
 def runconfig(timers):
 	global configs
@@ -101,11 +144,9 @@ def runconfig(timers):
 					rconpass=conf['rcon']['password'],
 					udphost=conf['udp']['host'], udpport=conf['udp']['port'], schedobj=timers)
 
-		for rel in conf['relays']:
-			what = None
-			if 'what' in rel:
-				what = rel['what']
-			cli.relay_add(rel['type'], rel['name'], rel['channel'], rel['prefix'], what)
+		for rkey in conf['relays']:
+			for rel in conf['relays'][rkey]:
+				cli.relay_add(rel['type'], rel['name'], rel['channel'], rel['prefix'], rkey)
 
 		cli.connect()
 		clients[key] = cli
@@ -181,7 +222,7 @@ class client:
 		self._udpsock = None
 		self._sched = schedobj
 		self._schedpri = schedpri
-		self._relays = []
+		self._relays = {}
 		self._schedevs = {'conn': None, 'login': None, 'expirecalls': None}
 		self._connfreq = 10
 		self._rcontimeout = 10
@@ -192,9 +233,12 @@ class client:
 		relay.bind('minecraft', self.name, self._relaycallback)
 
 	def __del__(self):
-		self.disconnect("Shutting down")
-		relay.unbind('minecraft', self.name, self._relaycallback)
-		self._deltimer(self._schedevs['expirecalls'])
+		try:
+			self.disconnect("Shutting down")
+			relay.unbind('minecraft', self.name, self._relaycallback)
+			self._deltimer(self._schedevs['expirecalls'])
+		except:
+			pass
 
 	def _addtimer(self, delay=10, callback=None, params=(), ts=None, pri=None):
 		if pri == None:
@@ -356,20 +400,21 @@ class client:
 					self._callrelay('*** Connection from ' + ip + ' rejected (not whitelisted: ' + name + ')', jsonobj, schannel='udp')
 		self._callrelay(None, jsonobj, what='udp', schannel='udp')
 
-	def _callrelay(self, text, obj, type=None, name=None, channel=None, what=None, schannel=''):
-		for rel in self._relays:
-			if what != rel.extra['what'] and rel.extra['what'] != 'all':
+	def _callrelay(self, text, obj, type=None, name=None, channel=None, what='', schannel=''):
+		for key in self._relays:
+			if key != what and what != 'all':
 				continue
-			if type != None and rel.type != type:
-				continue
-			if name != None and rel.name != name:
-				continue
-			if channel != None and rel.channel != channel.lower():
-				continue
-			rtext = text
-			if rel.extra['prefix'] != '' and text != None:
-				rtext = rel.extra['prefix'] + ' ' + text
-			relay.call(rtext, rel, relay.RelaySource('minecraft', self.name, schannel, {}), {'obj': obj})
+			for rel in self._relays[key]:
+				if type != None and rel.type != type:
+					continue
+				if name != None and rel.name != name:
+					continue
+				if channel != None and rel.channel != channel.lower():
+					continue
+				rtext = text
+				if rel.extra['prefix'] != '' and text != None and text != '':
+					rtext = rel.extra['prefix'] + ' ' + text
+				relay.call(rtext, rel, relay.RelaySource('minecraft', self.name, schannel, {}), {'obj': obj})
 
 	def _cleanformatting(self, text):
 		s = text.replace(u'§0', '')
@@ -610,7 +655,9 @@ class client:
 			self._udpsock = None
 
 	def relay_add(self, type, name, channel, prefix, what=None):
-		rel = relay.RelayTarget(type, name, channel, {'prefix': prefix, 'what': what})
-		if not rel in self._relays:
-			self._relays.append(rel)
+		rel = relay.RelayTarget(type, name, channel, {'prefix': prefix})
+		if not what in self._relays:
+			self._relays[what] = [rel]
+		else:
+			self._relays[what].append(rel)
 		log.log(LOG_INFO, 'Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix=' + prefix + ')', self)
