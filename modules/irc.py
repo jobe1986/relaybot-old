@@ -554,7 +554,7 @@ class client:
 			self.send('JOIN ' + channel)
 
 	def relay_add(self, relchan, type, name, channel, prefix, what=None):
-		rel = relay.RelayTarget(type, name, channel, {'prefix': prefix, 'what': what})
+		rel = relay.RelayTarget(type, name, channel, {'prefix': prefix})
 		if relchan.lower() in self._relays:
 			if not rel in self._relays[relchan.lower()]:
 				self._relays[relchan.lower()].append(rel)
