@@ -240,6 +240,9 @@ class client:
 		except:
 			pass
 
+	def _nullcallback(self, *args, **kwargs):
+		return
+
 	def _addtimer(self, delay=10, callback=None, params=(), ts=None, pri=None):
 		if pri == None:
 			pri = self._schedpri

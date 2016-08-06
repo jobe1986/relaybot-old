@@ -192,9 +192,11 @@ class client:
 		relay.bind('irc', self.name, self._relaycallback)
 
 	def __del__(self):
-		self.disconnect("Shutting down")
-		relay.unbind('irc', self.name, self._relaycallback)
-		return
+		try:
+			self.disconnect("Shutting down")
+			relay.unbind('irc', self.name, self._relaycallback)
+		except:
+			pass
 
 	def _nullcallback(self, *args, **kwargs):
 		return
