@@ -321,7 +321,7 @@ class client:
 					if len(self._rconbuf) < size + 4:
 						break
 
-					log.log(LOG_DEBUG, 'RCON Parsing packet: ' + binascii.hexlify(self._rconbuf[:size + 4]))
+					log.log(LOG_DEBUG, 'RCON Parsing packet: ' + binascii.hexlify(self._rconbuf[:size + 4]), self)
 					packet = self._rconbuf[4:size + 4]
 					self._rconbuf = self._rconbuf[size + 5:]
 
@@ -331,7 +331,7 @@ class client:
 					elif size > 10:
 						(idin, type, payload, padding) = unpack('<ii' + str(size-10) + 's2s', packet)
 					else:
-						log.log(LOG_DEBUG, 'RCON Packet with erroneous length (' + str(size) + '): ' + binascii.hexlify(packet))
+						log.log(LOG_DEBUG, 'RCON Packet with erroneous length (' + str(size) + '): ' + binascii.hexlify(packet), self)
 						continue
 
 					log.log(LOG_DEBUG, 'RCON <-- id:' + str(idin) + ', type:' + str(type) + ', payload:' + payload, self)
@@ -339,7 +339,7 @@ class client:
 					try:
 						self._rconhandle(idin, type, payload)
 					except Exception as e:
-						log.log(LOG_ERROR, 'Error handling RCON packet: ' + str(e))
+						log.log(LOG_ERROR, 'Error handling RCON packet: ' + str(e), self)
 
 	def _doerr(self, sock):
 		return
@@ -506,7 +506,7 @@ class client:
 		try:
 			self._rconsock.send(packet)
 		except Exception as e:
-			log.log(LOG_ERROR, 'RCON Error sending to RCON: ' + str(e))
+			log.log(LOG_ERROR, 'RCON Error sending to RCON: ' + str(e), self)
 			self.disconnect('', False)
 			self._schedconnect()
 
@@ -641,7 +641,7 @@ class client:
 
 		self._addsock()
 
-		log.log(LOG_INFO, 'Connected to rcon socket, waiting for logon confirmation')
+		log.log(LOG_INFO, 'Connected to rcon socket, waiting for logon confirmation', self)
 
 	def disconnect(self, reason = '', sendexit = True, closeudp = False):
 		self._delsock(closeudp)

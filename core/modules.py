@@ -41,6 +41,8 @@ def load(name):
 
 	if m != None:
 		mods[name] = m
+		return True
+	return False
 
 def getsockets():
 	global mods
@@ -64,7 +66,8 @@ def loadconfig(doc):
 			log.log(LOG_ERROR, 'Module config missing module name')
 			raise Exception('Module config missing module name')
 		if not mod.attrib['name'] in mods:
-			load(mod.attrib['name'])
+			if not load(mod.attrib['name']):
+				continue
 			if hasattr(mods[mod.attrib['name']], 'loadconfig'):
 				mods[mod.attrib['name']].loadconfig(doc)
 
