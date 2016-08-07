@@ -30,7 +30,7 @@ def load(name):
 
 	if 'name' in mods:
 		log.log(LOG_WARN, 'Unable to load module ' + name + ': already loaded')
-		return
+		return False
 	try:
 		m = __import__('modules.' + name)
 		if hasattr(m, name):
