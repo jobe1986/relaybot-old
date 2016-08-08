@@ -133,7 +133,7 @@ def runconfig(timers):
 	global configs
 	global clients
 
-	for key in configs.keys():
+	for key in configs:
 		conf = configs[key]
 		if not 'host' in conf['udp']:
 			conf['udp']['host'] = None
@@ -354,7 +354,7 @@ class client:
 			self._callrelay(jsonobj['message'], jsonobj, schannel='udp')
 		elif jsonobj['logger'] == 'net.minecraft.server.MinecraftServer':
 			matched = False
-			for key in self._regp.keys():
+			for key in self._regp:
 				if not key in self._regs:
 					self._regs[key] = re.compile(self._regp[key], re.S)
 				m = self._regs[key].match(jsonobj['message'])
@@ -390,7 +390,7 @@ class client:
 				if self._isdeath(jsonobj['message']):
 					self._callrelay(self._formatmctoirc(jsonobj['message']), jsonobj, schannel='udp')
 		elif jsonobj['logger'] == 'mg':
-			for key in self._mgregp.keys():
+			for key in self._mgregp:
 				if not key in self._mgregs:
 					self._mgregs[key] = re.compile(self._mgregp[key], re.S)
 				m = self._mgregs[key].match(jsonobj['message'])
@@ -553,7 +553,7 @@ class client:
 			self._rconcommand('tellraw @a ' + json.dumps([data.text]))
 
 	def _rconexpirecalls(self):
-		for id in self._rconcalls.keys():
+		for id in self._rconcalls:
 			if self._rconcalls[id]['time'] + self._rconexpiretimeout > time.time():
 				log.log(LOG_INFO, 'Expiring RCON callback: ' + str(self._rconcalls[id]), self)
 				del self._rconcalls[id]

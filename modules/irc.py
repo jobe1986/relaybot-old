@@ -123,7 +123,7 @@ def runconfig(timers):
 	global configs
 	global clients
 
-	for key in configs.keys():
+	for key in configs:
 		user = configs[key]['user']
 		server = configs[key]['server']
 		cmds = []
@@ -135,7 +135,7 @@ def runconfig(timers):
 		for chan in configs[key]['channels']:
 			cli.channel_add(chan)
 
-		for chan in configs[key]['relays'].keys():
+		for chan in configs[key]['relays']:
 			rels = configs[key]['relays'][chan]
 			for rel in rels:
 				cli.relay_add(chan, rel['type'], rel['name'], rel['channel'], rel['prefix'])
@@ -323,8 +323,9 @@ class client:
 		self._performdone = True
 		for cmd in self._performs:
 			self.send(cmd)
-		for chan in self._channels.keys():
-			self.send('JOIN ' + chan)
+		for chan in self._channels:
+			if not self._channels[chan]:
+				self.send('JOIN ' + chan)
 		self._nexterrconnfreq = self._errconnfreq
 		self._schedevs['perform'] = None
 
@@ -395,6 +396,7 @@ class client:
 	def _m_cap(self, msg):
 		if not self._iscap:
 			self._caps = {}
+			self._schedevs['cap'] = self._addtimer(delay=self._capdelay, callback=self._docapend)
 		self._iscap = True
 		if (msg['params'][1] == 'LS'):
 			reqcaps = []
@@ -493,7 +495,6 @@ class client:
 		log.log(LOG_INFO, 'Connected to ' + self._server['server'] + ' on port ' + str(self._server['port']), self)
 
 		self._startping()
-		self._schedevs['cap'] = self._addtimer(delay=self._capdelay, callback=self._docapend)
 
 		self.send('CAP LS')
 		if (self._server['password'] != None):
@@ -524,7 +525,7 @@ class client:
 		self._disconnecting = False
 		for ev in self._schedevs:
 			self._deltimer(self._schedevs[ev])
-		for chan in self._channels.keys():
+		for chan in self._channels:
 			self._channels[chan] = False
 		return
 
