@@ -9,7 +9,7 @@ REQUIREMENTS:
 Requires at the very least Python 2.6 (as far as I know)
 
 INSTALLATION:
-Installation is simple, once downloaded you need only copy exampleconfig.xml
-to config.xml, read the enclosed comments and configure as necesary.
-After completing config.xml you will then be able to run the bot using
-'python run.py'
+Installation is simple, once downloaded you need only copy
+conf/exampleconfig.xml to conf/config.xml, read the enclosed comments
+and configure as necesary. After completing conf/config.xml you will then be
+able to run the bot using 'python run.py'

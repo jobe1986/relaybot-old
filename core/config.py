@@ -24,7 +24,7 @@ from xml.etree.ElementTree import ElementTree
 from core.rblogging import *
 import core.modules as modules
 
-def loadconfig(timers, file = 'config.xml'):
+def loadconfig(timers, file = 'config/config.xml'):
 	try:
 		tree = ElementTree()
 		doc = tree.parse(file)
