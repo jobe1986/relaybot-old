@@ -581,7 +581,7 @@ class client:
 			return
 
 		lines = buf.replace('\r', '\n').split('\n')
-		if ((len(lines) > 1) and (lines[-1] != '')):
+		if ((len(lines) > 0) and (lines[-1] != '')):
 			self._ircbuf = lines[-1]
 			del lines[-1]
 		else:
