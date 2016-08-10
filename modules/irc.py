@@ -570,7 +570,7 @@ class client:
 			return
 
 		try:
-			buf = self._ircbuf + self._sock.recv(512)
+			buf = self._ircbuf + self._sock.recv(1024)
 		except:
 			buf = ''
 
