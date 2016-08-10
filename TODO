@@ -1,5 +1,4 @@
 Todo list (duh):
 
-- Revamp logging
-- join stats tracking (use sql db)
+- Add logging filters
 - Add config option to prevent relaying messages based on regex filter?

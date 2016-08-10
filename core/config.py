@@ -21,7 +21,7 @@
 
 from xml.etree.ElementTree import ElementTree
 
-from core.rblogging import *
+import core.rblogging as rblogging
 import core.modules as modules
 
 def loadconfig(timers, file = 'config/config.xml'):
@@ -29,11 +29,15 @@ def loadconfig(timers, file = 'config/config.xml'):
 		tree = ElementTree()
 		doc = tree.parse(file)
 
+		rblogging.loadconfig(doc)
+
+		rblogging.runconfig()
+
 		modules.loadconfig(doc)
 	except Exception as e:
-		log.log(LOG_INFO, "Error parsing config: " + str(e))
+		rblogging.log.log(LOG_INFO, "Error parsing config: " + str(e))
 
 	try:
 		modules.runconfig(timers)
 	except Exception as e:
-		log.log(LOG_INFO, "Error loading config: " + str(e))
+		rblogging.log.log(LOG_INFO, "Error loading config: " + str(e))

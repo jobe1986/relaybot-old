@@ -36,6 +36,8 @@ LOG_WARNING = logging.WARNING
 LOG_INFO = logging.INFO
 LOG_DEBUG = logging.DEBUG
 
+log = None
+
 class UTCFormatter(logging.Formatter):
 	converter = time.gmtime
 
@@ -92,18 +94,76 @@ class MyLogger(logging.Logger):
 		if self.isEnabledFor(level):
 			self._log(level, msg, args, **kwargs)
 
-logging.setLoggerClass(MyLogger)
+def loadconfig(doc):
+	global configs
 
-log = logging.getLogger('relaybot')
+	configs = {'outputs': []}
 
-loghandler = logging.StreamHandler(sys.stdout)
-logfilehandler = logging.handlers.TimedRotatingFileHandler('logs/relaybot.log', when='midnight', interval=1, backupCount=10, utc=True)
-logformatter = UTCFormatter('[%(asctime)s] [%(modname)s/%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
+	logconfs = doc.findall('./logging')
 
-loghandler.setFormatter(logformatter)
-logfilehandler.setFormatter(logformatter)
+	if len(logconfs) < 1:
+		return
 
-log.addHandler(loghandler)
-log.addHandler(logfilehandler)
+	logconf = logconfs[0]
 
-log.setLevel(logging.DEBUG)
+	outs = logconf.findall('./output')
+
+	for out in outs:
+		if not 'type' in out.attrib:
+			print 'Error: Logging output missing type attribute'
+			raise Exception('Error: Logging output missing type attribute')
+		if not out.attrib['type'].lower() in ['file', 'stdout', 'stderr']:
+			print 'Skipping Logging output with invalid type attribute'
+			continue
+
+		outconf = {'type': out.attrib['type'].lower(), 'path': None, 'rollover': None, 'level': None}
+
+		if outconf['type'] == 'file':
+			if not 'path' in out.attrib:
+				print 'Error: Logging output missing path attribute'
+				raise Exception('Error: Logging output missing path attribute')
+			outconf['path'] = out.attrib['path']
+
+			if 'rollover' in out.attrib:
+				if not out.attrib['rollover'].lower() in ['midnight']:
+					try:
+						outconf['rollover'] = int(out.attrib['rollover'])
+					except:
+						outconf['rollover'] = None
+				else:
+					outconf['rollover'] = out.attrib['rollover'].lower()
+
+		if 'level' in out.attrib and out.attrib['level'].upper() in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+			outconf['level'] = out.attrib['level']
+		else:
+			outconf['level'] = 'INFO'
+
+		configs['outputs'].append(outconf)
+
+def runconfig():
+	global configs
+	global log
+
+	logging.setLoggerClass(MyLogger)
+	log = logging.getLogger('relaybot')
+	log.setLevel(logging.DEBUG)
+
+	for outconf in configs['outputs']:
+		if outconf['type'] == 'stdout':
+			loghandler = logging.StreamHandler(sys.stdout)
+		elif outconf['type'] == 'stderr':
+			loghandler = logging.StreamHandler(sys.stderr)
+		elif outconf['type'] == 'file':
+			if outconf['rollover'] == None:
+				loghandler = logging.FileHandler(outconf['path'])
+			elif outconf['rollover'] == 'midnight':
+				loghandler = logging.handlers.TimedRotatingFileHandler(outconf['path'], when='midnight', interval=1, backupCount=10, utc=True)
+			else:
+				loghandler = logging.handlers.RotatingFileHandler(outconf['path'], maxBytes=outconf['rollover'], backupCount=10)
+		logformatter = UTCFormatter('[%(asctime)s] [%(modname)s/%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
+		loghandler.setFormatter(logformatter)
+
+		levels = {'DEBUG': logging.DEBUG, 'INFO': logging.INFO, 'WARNING': logging.WARNING, 'ERROR': logging.ERROR, 'CRITICAL': logging.CRITICAL}
+
+		loghandler.setLevel(levels[outconf['level']])
+		log.addHandler(loghandler)

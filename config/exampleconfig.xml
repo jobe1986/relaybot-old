@@ -10,6 +10,31 @@
 	<module name="irc" />
 	<module name="minecraft" />
 
+	<!--
+		Logging config:
+		Specifies the logging output configuration.
+
+		Each <output> block must have a 'type' attribute which must be one of 'stdout',
+		'stderr' or 'file'.
+
+		If the 'type' attribute is 'file' then the 'path' attribute must be specified
+		as the path a file in which to output log data to. All directories leading to
+		the final file name must already exist.
+
+		The optional 'rollover' attribute is only used if the 'type' attribute is 'file'
+		In which case the 'rollover' attribute must be either 'midnight' (to have the
+		log file roll over at midnight) or a number of bytes (to have the log file roll
+		over when it reaches the number of bytes specified in size)
+
+		Each <output> block can also have a 'level' attribute which must be one of
+		'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL'. If not specified then the
+		level 'INFO' is assumed.
+	-->
+	<logging>
+		<output type="file" path="logs/relaybot.log" rollover="midnight" level="DEBUG"/>
+		<output type="stdout" level="DEBUG"/>
+	</logging>
+
 	<irc name="IRCNetwork">
 		<server host="irc.server.tld" port="6667" password="" />
 		<user nick="RelayBot" user="RelayBot" gecos="Simple Relay Bot" />
