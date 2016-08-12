@@ -36,8 +36,6 @@ LOG_WARNING = logging.WARNING
 LOG_INFO = logging.INFO
 LOG_DEBUG = logging.DEBUG
 
-log = None
-
 class UTCFormatter(logging.Formatter):
 	converter = time.gmtime
 
@@ -144,10 +142,6 @@ def runconfig():
 	global configs
 	global log
 
-	logging.setLoggerClass(MyLogger)
-	log = logging.getLogger('relaybot')
-	log.setLevel(logging.DEBUG)
-
 	for outconf in configs['outputs']:
 		if outconf['type'] == 'stdout':
 			loghandler = logging.StreamHandler(sys.stdout)
@@ -167,3 +161,7 @@ def runconfig():
 
 		loghandler.setLevel(levels[outconf['level']])
 		log.addHandler(loghandler)
+
+logging.setLoggerClass(MyLogger)
+log = logging.getLogger('relaybot')
+log.setLevel(logging.DEBUG)
