@@ -27,7 +27,8 @@ import core.rbsocket as rbsocket
 from core.rblogging import *
 import core.relay as relay
 
-RConPacket = namedtuple('RConPacket', ['id', 'type', 'payload'])
+MCRConPacket = namedtuple('MCRConPacket', ['id', 'type', 'payload'])
+MCUDPLogPacket = namedtuple('MCUDPLogPacket', ['timestamp', 'logger', 'message', 'thread', 'level'])
 
 configs = {}
 clients = {}
@@ -300,7 +301,11 @@ class client:
 					jsonobj = json.loads(jsonbuf)
 				except Exception as e:
 					return
-				self._handlejson(jsonobj)
+				try:
+					udpobj = MCUDPLogPacket(jsonobj['timestamp'], jsonobj['logger'], jsonobj['message'], jsonobj['thread'], jsonobj['level'])
+					self._handleudp(udpobj)
+				except Exception as e:
+					log.log(LOG_ERROR, 'Error handling UDP log packet: ' + str(e))
 		if sock == self._rconsock:
 			try:
 				buf = self._rconsock.recv(4110)
@@ -336,8 +341,10 @@ class client:
 
 					log.log(LOG_DEBUG, 'RCON <-- id:' + str(idin) + ', type:' + str(type) + ', payload:' + payload, self)
 
+					rcon = MCRConPacket(idin, type, payload)
+
 					try:
-						self._rconhandle(idin, type, payload)
+						self._rconhandle(rcon)
 					except Exception as e:
 						log.log(LOG_ERROR, 'Error handling RCON packet: ' + str(e), self)
 
@@ -347,17 +354,17 @@ class client:
 	def _dodisconnect(self, sock, msg):
 		self.disconnect(msg, True, True)
 
-	def _handlejson(self, jsonobj):
-		if jsonobj['logger'] == 'crontab.overviewer':
-			self._callrelay(jsonobj['message'], jsonobj, schannel='udp')
-		elif jsonobj['logger'] == 'crontab.overviewerpoi':
-			self._callrelay(jsonobj['message'], jsonobj, schannel='udp')
-		elif jsonobj['logger'] == 'net.minecraft.server.MinecraftServer':
+	def _handleudp(self, udpobj):
+		if udpobj.logger == 'crontab.overviewer':
+			self._callrelay(udpobj.message, udpobj, schannel='udp')
+		elif udpobj.logger == 'crontab.overviewerpoi':
+			self._callrelay(udpobj.message, udpobj, schannel='udp')
+		elif udpobj.logger == 'net.minecraft.server.MinecraftServer':
 			matched = False
 			for key in self._regp:
 				if not key in self._regs:
 					self._regs[key] = re.compile(self._regp[key], re.S)
-				m = self._regs[key].match(jsonobj['message'])
+				m = self._regs[key].match(udpobj.message)
 
 				if m == None:
 					continue
@@ -382,26 +389,26 @@ class client:
 					text = self._formatmctoirc(text)
 					if name == 'Rcon':
 						continue
-					self._callrelay(npre + name + nsuf + ' ' + text, jsonobj, schannel='udp')
+					self._callrelay(npre + name + nsuf + ' ' + text, udpobj, schannel='udp')
 				else:
-					self._callrelay(self._formatmctoirc(m.group(0)), jsonobj, schannel='udp')
+					self._callrelay(self._formatmctoirc(m.group(0)), udpobj, schannel='udp')
 				break
 			if not matched:
-				if self._isdeath(jsonobj['message']):
-					self._callrelay(self._formatmctoirc(jsonobj['message']), jsonobj, schannel='udp')
-		elif jsonobj['logger'] == 'mg':
+				if self._isdeath(udpobj.message):
+					self._callrelay(self._formatmctoirc(udpobj.message), udpobj, schannel='udp')
+		elif udpobj.logger == 'mg':
 			for key in self._mgregp:
 				if not key in self._mgregs:
 					self._mgregs[key] = re.compile(self._mgregp[key], re.S)
-				m = self._mgregs[key].match(jsonobj['message'])
+				m = self._mgregs[key].match(udpobj.message)
 
 				if m == None:
 					continue
 				if key == 'whitelist':
 					name = m.group(2)
 					ip = m.group(3)
-					self._callrelay('*** Connection from ' + ip + ' rejected (not whitelisted: ' + name + ')', jsonobj, schannel='udp')
-		self._callrelay(None, jsonobj, what='udp', schannel='udp')
+					self._callrelay('*** Connection from ' + ip + ' rejected (not whitelisted: ' + name + ')', udpobj, schannel='udp')
+		self._callrelay(None, udpobj, what='udp', schannel='udp')
 
 	def _callrelay(self, text, obj, type=None, name=None, channel=None, what='', schannel=''):
 		for key in self._relays:
@@ -510,19 +517,19 @@ class client:
 			self.disconnect('', False)
 			self._schedconnect()
 
-	def _rconhandle(self, id, type, payload):
-		if id == -1 and type == 2:
+	def _rconhandle(self, rcon):
+		if rcon.id == -1 and rcon.type == 2:
 			self.disconnect()
 			log.log(LOG_ERROR, 'RCON Unable to login to RCON, will not attempt to reconnect', self)
-		if type == 2:
+		if rcon.type == 2:
 			self._rconconnected = True
 			self._deltimer(self._schedevs['login'])
 			self._schedevs['login'] = None
 			log.log(LOG_INFO, 'RCON Sucessfully logged in to RCON', self)
-		if type == 0:
-			if id in self._rconcalls:
+		if rcon.type == 0:
+			if rcon.id in self._rconcalls:
 				if self._rconcalls[id]['callback'] != None:
-					self._rconcalls[id]['callback'](id, type, payload, self._rconcalls[id])
+					self._rconcalls[id]['callback'](rcon, self._rconcalls[id])
 				del self._rconcalls[id]
 
 	def _rcontimeout(self):
@@ -531,13 +538,12 @@ class client:
 		self.disconnect()
 		self._schedconnect()
 
-	def _cmd_players(self, id, type, payload, rconcall):
+	def _cmd_players(self, rcon, rconcall):
 		if not 'players' in self._cmdoutputres:
 			self._cmdoutputres['players'] = re.compile(self._cmdoutputrep['players'])
-		m = self._cmdoutputres['players'].match(payload)
+		m = self._cmdoutputres['players'].match(rcon.payload)
 		if m != None:
 			first = m.group(1)
-			rcon = RConPacket(id, type, payload)
 			if m.group(2) == '':
 				first = first[0:-1]
 			self._callrelay(first, rcon, rconcall['args'][0].type, rconcall['args'][0].name, rconcall['args'][0].channel, schannel='rcon')
