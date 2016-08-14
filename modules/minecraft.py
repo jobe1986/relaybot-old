@@ -181,6 +181,8 @@ class client:
 			'^.+? was burnt to a crisp whilst fighting .+?$',
 			'^.+? tried to swim in lava$',
 			'^.+? tried to swim in lava to escape .+?$',
+			'^.+? discovered floor was lava$',
+			'^.+? walked into danger zone due to .+?$',
 			'^.+? suffocated in a wall$',
 			'^.+? drowned$',
 			'^.+? drowned whilst trying to escape .+?$',
@@ -206,7 +208,9 @@ class client:
 			'^.+? was killed by .+? using .+?$',
 			'^.+? was killed trying to hurt .+?$',
 			'^.+? hit the ground too hard$',
-			'^.+? fell out of the world']
+			'^.+? fell out of the world$',
+			'^.+? was roasted in dragon breath$',
+			'^.+? experienced kinetic energy$']
 	_deathres = []
 	_cmdoutputrep = {'players': '^(There are \d+/\d+ players online:)(.*?)$'}
 	_cmdoutputres = {}
