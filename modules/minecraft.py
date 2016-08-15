@@ -532,9 +532,9 @@ class client:
 			log.log(LOG_INFO, 'RCON Sucessfully logged in to RCON', self)
 		if rcon.type == 0:
 			if rcon.id in self._rconcalls:
-				if self._rconcalls[id]['callback'] != None:
-					self._rconcalls[id]['callback'](rcon, self._rconcalls[id])
-				del self._rconcalls[id]
+				if self._rconcalls[rcon.id]['callback'] != None:
+					self._rconcalls[rcon.id]['callback'](rcon, self._rconcalls[rcon.id])
+				del self._rconcalls[rcon.id]
 
 	def _rcontimeout(self):
 		if self._rconconnected:
@@ -543,16 +543,19 @@ class client:
 		self._schedconnect()
 
 	def _cmd_players(self, rcon, rconcall):
-		if not 'players' in self._cmdoutputres:
-			self._cmdoutputres['players'] = re.compile(self._cmdoutputrep['players'])
-		m = self._cmdoutputres['players'].match(rcon.payload)
-		if m != None:
-			first = m.group(1)
-			if m.group(2) == '':
-				first = first[0:-1]
-			self._callrelay(first, rcon, rconcall['args'][0].type, rconcall['args'][0].name, rconcall['args'][0].channel, schannel='rcon')
-			if m.group(2) != '':
-				self._callrelay(m.group(2), rcon, rconcall['args'][0].type, rconcall['args'][0].name, rconcall['args'][0].channel, schannel='rcon')
+		try:
+			if not 'players' in self._cmdoutputres:
+				self._cmdoutputres['players'] = re.compile(self._cmdoutputrep['players'])
+			m = self._cmdoutputres['players'].match(rcon.payload)
+			if m != None:
+				first = m.group(1)
+				if m.group(2) == '':
+					first = first[0:-1]
+				self._callrelay(first, rcon, rconcall['args'][0].type, rconcall['args'][0].name, rconcall['args'][0].channel, schannel='rcon')
+				if m.group(2) != '':
+					self._callrelay(m.group(2), rcon, rconcall['args'][0].type, rconcall['args'][0].name, rconcall['args'][0].channel, schannel='rcon')
+		except Exception as e:
+			log.log(LOG_ERROR, 'Error handling RCON players list response: ' + str(e), self)
 
 	def _relaycallback(self, data):
 		if self._rconconnected:
@@ -563,10 +566,13 @@ class client:
 			self._rconcommand('tellraw @a ' + json.dumps([data.text]))
 
 	def _rconexpirecalls(self):
+		delids = []
 		for id in self._rconcalls:
 			if self._rconcalls[id]['time'] + self._rconexpiretimeout > time.time():
 				log.log(LOG_INFO, 'Expiring RCON callback: ' + str(self._rconcalls[id]), self)
-				del self._rconcalls[id]
+				delids.append(id)
+		for id in delids:
+			del self._rconcalls[id]
 		self._schedevs['expirecalls'] = self._addtimer(delay=self._rconexpiretimeout, callback=self._rconexpirecalls)
 
 	def _rconcommand(self, command, callback=None, args=None):
