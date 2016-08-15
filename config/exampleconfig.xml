@@ -54,7 +54,9 @@
 			rcon.password=password
 			broadcast-rcon-to-ops=false
 		-->
-		<rcon host="127.0.0.1" port="25575" password="password" />
+		<rcon host="127.0.0.1" port="25575" password="password">
+			<relay type="irc" name="IRCNetwork" channel="#minecraft" prefix="[Minecraft]" />
+		</rcon>
 		<!--
 			This module requires your minecraft server to be configured to relay log
 			messages to this bot in a log4j2 JSON format via UDP.
@@ -70,7 +72,12 @@
 			"-Dlog4j.configurationFile=/path/to/log4j2.xml" every time you run your minecraft
 			server. (Don't forget to change the path to log4j2.xml)
 		-->
-		<udp host="127.0.0.1" port="25585" />
-		<relay type="irc" name="IRCNetwork" channel="#minecraft" prefix="[Minecraft]" />
+		<udp host="127.0.0.1" port="25585">
+			<relay type="irc" name="IRCNetwork" channel="#minecraft" prefix="[Minecraft]">
+				<filter type="playerdeath" />
+				<filter type="playerjoinpart" />
+				<filter type="playerchat" />
+			</relay>
+		</udp>
 	</minecraft>
 </config>

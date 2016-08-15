@@ -138,7 +138,7 @@ def runconfig(timers):
 		for chan in configs[key]['relays']:
 			rels = configs[key]['relays'][chan]
 			for rel in rels:
-				cli.relay_add(chan, rel['type'], rel['name'], rel['channel'], rel['prefix'])
+				cli.relay_add(chan, rel['type'], rel['name'], rel['channel'], rel['prefix'], None)
 
 		cli.connect()
 		clients[key] = cli
@@ -425,6 +425,8 @@ class client:
 		self._schedevs['nick'] = self._addtimer(delay=self._nickdelay, callback=self._renick)
 
 	def _relaycallback(self, data):
+		if data.text == None:
+			return
 		if self._connected and self._performdone:
 			if data.target.channel.lower() in self._channels:
 				self.send('PRIVMSG ' + data.target.channel + ' :' + data.text)
@@ -556,8 +558,8 @@ class client:
 		if self._connected and self._performdone:
 			self.send('JOIN ' + channel)
 
-	def relay_add(self, relchan, type, name, channel, prefix, what=None):
-		rel = relay.RelayTarget(type, name, channel, {'prefix': prefix})
+	def relay_add(self, relchan, type, name, channel, prefix, what=None, filters=None):
+		rel = relay.RelayTarget(type, name, channel, {'prefix': prefix}, filters)
 		if relchan.lower() in self._relays:
 			if not rel in self._relays[relchan.lower()]:
 				self._relays[relchan.lower()].append(rel)

@@ -32,6 +32,12 @@ MCUDPLogPacket = namedtuple('MCUDPLogPacket', ['timestamp', 'logger', 'message',
 
 configs = {}
 clients = {}
+filterobjs = {
+		'playerdeath': None,
+		'playerjoinpart': None,
+		'playerchat': None,
+		'overviewer': None
+	}
 
 def loadconfig(doc):
 	global configs
@@ -82,6 +88,13 @@ def loadconfig(doc):
 				log.log(LOG_INFO, 'Ignoring attempt to relay Minecraft to itself')
 				continue
 			relnew = rel.attrib
+			relnew['filters'] = []
+
+			filters = rel.findall('./filter')
+			for filt in filters:
+				if 'type' in filt.attrib:
+					relnew['filters'].append(filt.attrib['type'])
+
 			if not 'prefix' in relnew:
 				relnew['prefix'] = '[' + name + ']'
 			if not 'rcon' in configs[name]['relays']:
@@ -103,6 +116,13 @@ def loadconfig(doc):
 				log.log(LOG_INFO, 'Ignoring attempt to relay Minecraft to itself')
 				continue
 			relnew = rel.attrib
+			relnew['filters'] = []
+
+			filters = rel.findall('./filter')
+			for filt in filters:
+				if 'type' in filt.attrib:
+					relnew['filters'].append(filt.attrib['type'])
+
 			if not 'prefix' in relnew:
 				relnew['prefix'] = '[' + name + ']'
 			if not 'udp' in configs[name]['relays']:
@@ -124,6 +144,13 @@ def loadconfig(doc):
 				log.log(LOG_INFO, 'Ignoring attempt to relay Minecraft to itself')
 				continue
 			relnew = rel.attrib
+			relnew['filters'] = []
+
+			filters = rel.findall('./filter')
+			for filt in filters:
+				if 'type' in filt.attrib:
+					relnew['filters'].append(filt.attrib['type'])
+
 			if not 'prefix' in relnew:
 				relnew['prefix'] = '[' + name + ']'
 			if not '' in configs[name]['relays']:
@@ -133,6 +160,7 @@ def loadconfig(doc):
 def runconfig(timers):
 	global configs
 	global clients
+	global filterobjs
 
 	for key in configs:
 		conf = configs[key]
@@ -147,7 +175,14 @@ def runconfig(timers):
 
 		for rkey in conf['relays']:
 			for rel in conf['relays'][rkey]:
-				cli.relay_add(rel['type'], rel['name'], rel['channel'], rel['prefix'], rkey)
+				filters = []
+				for fname in rel['filters']:
+					filt = _getfilter(fname)
+					if filt != None:
+						filters.append(filt)
+				if len(filters) < 1:
+					filters = None
+				cli.relay_add(rel['type'], rel['name'], rel['channel'], rel['prefix'], rkey, filters)
 
 		cli.connect()
 		clients[key] = cli
@@ -155,63 +190,65 @@ def runconfig(timers):
 def sockets():
 	return client.sockets
 
+def _getfilter(name):
+	global filterobjs, filterclasses
+
+	if not name.lower() in filterobjs:
+		return None
+
+	return filterobjs[name.lower()]
+
+def _cleanformatting(text):
+	s = text.replace(u'§0', '')
+	s = s.replace(u'§1', '')
+	s = s.replace(u'§2', '')
+	s = s.replace(u'§3', '')
+	s = s.replace(u'§4', '')
+	s = s.replace(u'§5', '')
+	s = s.replace(u'§6', '')
+	s = s.replace(u'§7', '')
+	s = s.replace(u'§8', '')
+	s = s.replace(u'§9', '')
+	s = s.replace(u'§a', '')
+	s = s.replace(u'§b', '')
+	s = s.replace(u'§c', '')
+	s = s.replace(u'§d', '')
+	s = s.replace(u'§e', '')
+	s = s.replace(u'§f', '')
+	s = s.replace(u'§k', '')
+	s = s.replace(u'§l', '')
+	s = s.replace(u'§m', '')
+	s = s.replace(u'§n', '')
+	s = s.replace(u'§o', '')
+	return s.replace(u'§r', '')
+
+def _formatmctoirc(text):
+	s = text.replace(u'§0', '\x0301')
+	s = s.replace(u'§1', '\x0302')
+	s = s.replace(u'§2', '\x0303')
+	s = s.replace(u'§3', '\x0310')
+	s = s.replace(u'§4', '\x0305')
+	s = s.replace(u'§5', '\x0306')
+	s = s.replace(u'§6', '\x0307')
+	s = s.replace(u'§7', '\x0315')
+	s = s.replace(u'§8', '\x0314')
+	s = s.replace(u'§9', '\x0312')
+	s = s.replace(u'§a', '\x0309')
+	s = s.replace(u'§b', '\x0311')
+	s = s.replace(u'§c', '\x0304')
+	s = s.replace(u'§d', '\x0313')
+	s = s.replace(u'§e', '\x0308')
+	s = s.replace(u'§f', '\x0300')
+	s = s.replace(u'§k', '')
+	s = s.replace(u'§l', '\x02')
+	s = s.replace(u'§m', '')
+	s = s.replace(u'§n', '\x1F')
+	s = s.replace(u'§o', '\x1D')
+	return s.replace(u'§r', '\x0F')
+
 class client:
 	sockets = []
-	_regp = {'chatmsg': '^([\\[<])([^ ]+?)([\\]>]) (.*)$',
-			'chatact': '^\\* ([^ ]+) (.*)$',
-			'userjoin': '^([^\s]+) (\\(formerly known as .+?\\) )?(?:joined|left) the game$',
-			'achievment': '^([^\s]+?) has (lost|just earned) the achievement \[.*?\]$'}
-	_regs = {}
-	_mgregp = {'whitelist': '^com.mojang.authlib.GameProfile.*?id=([-a-f0-9]+?),.*?name=([^,]+?),.+?\\(\\/([0-9\\.]+?):([0-9]+?)\\) lost connection: You are not white-listed on this server!.*$'}
-	_mgregs = {}
 	_jsonfixreg = None
-	_deathreg = ['^.+? fell off a ladder$',
-			'^.+? fell off some vines$',
-			'^.+? fell out of the water$',
-			'^.+? fell from a high place$',
-			'^.+? was doomed to fall$',
-			'^.+? was doomed to fall by .+?$',
-			'^.+? was doomed to fall by .+? using .+?$',
-			'^.+? fell too far and was finished by .+?$',
-			'^.+? fell too far and was finished by .+? using .+?$',
-			'^.+? was struck by lightning$',
-			'^.+? went up in flames$',
-			'^.+? walked into fire whilst fighting .+?$',
-			'^.+? burned to death$',
-			'^.+? was burnt to a crisp whilst fighting .+?$',
-			'^.+? tried to swim in lava$',
-			'^.+? tried to swim in lava to escape .+?$',
-			'^.+? discovered floor was lava$',
-			'^.+? walked into danger zone due to .+?$',
-			'^.+? suffocated in a wall$',
-			'^.+? drowned$',
-			'^.+? drowned whilst trying to escape .+?$',
-			'^.+? starved to death$',
-			'^.+? was pricked to death$',
-			'^.+? walked into a cactus whilst trying to escape .+?$',
-			'^.+? died$',
-			'^.+? blew up$',
-			'^.+? was blown up by .+?$',
-			'^.+? was killed by magic$',
-			'^.+? withered away$',
-			'^.+? was squashed by a falling anvil$',
-			'^.+? was squashed by a falling block$',
-			'^.+? was slain by .+?$',
-			'^.+? was slain by .+? using .+?$',
-			'^.+? was shot by .+?$',
-			'^.+? was shot by .+? using .+?$',
-			'^.+? was fireballed by .+?$',
-			'^.+? was fireballed by .+? using .+?$',
-			'^.+? was pummeled by .+?$',
-			'^.+? was pummeled by .+? using .+?$',
-			'^.+? was killed by .+? using magic$',
-			'^.+? was killed by .+? using .+?$',
-			'^.+? was killed trying to hurt .+?$',
-			'^.+? hit the ground too hard$',
-			'^.+? fell out of the world$',
-			'^.+? was roasted in dragon breath$',
-			'^.+? experienced kinetic energy$']
-	_deathres = []
 	_cmdoutputrep = {'players': '^(There are \d+/\d+ players online:)(.*?)$'}
 	_cmdoutputres = {}
 
@@ -309,7 +346,7 @@ class client:
 					udpobj = MCUDPLogPacket(jsonobj['timestamp'], jsonobj['logger'], jsonobj['message'], jsonobj['thread'], jsonobj['level'])
 					self._handleudp(udpobj)
 				except Exception as e:
-					log.log(LOG_ERROR, 'Error handling UDP log packet: ' + str(e))
+					log.log(LOG_ERROR, 'Error handling UDP log packet: ' + str(e), self)
 		if sock == self._rconsock:
 			try:
 				buf = self._rconsock.recv(4110)
@@ -359,62 +396,10 @@ class client:
 		self.disconnect(msg, True, True)
 
 	def _handleudp(self, udpobj):
-		if udpobj.logger == 'crontab.overviewer':
-			self._callrelay(udpobj.message, udpobj, schannel='udp')
-		elif udpobj.logger == 'crontab.overviewerpoi':
-			self._callrelay(udpobj.message, udpobj, schannel='udp')
-		elif udpobj.logger == 'net.minecraft.server.MinecraftServer':
-			matched = False
-			for key in self._regp:
-				if not key in self._regs:
-					self._regs[key] = re.compile(self._regp[key], re.S)
-				m = self._regs[key].match(udpobj.message)
-
-				if m == None:
-					continue
-
-				matched = True
-
-				if key == 'chatmsg' or key == 'chatact':
-					name = ''
-					npre = ''
-					nsuf = ''
-					text = ''
-					if key == 'chatmsg':
-						npre = m.group(1)
-						name = m.group(2)
-						nsuf = m.group(3)
-						text = m.group(4)
-					else:
-						npre = '* '
-						name = m.group(1)
-						text = m.group(2)
-					name = self._formatmctoirc(name)
-					text = self._formatmctoirc(text)
-					if name == 'Rcon':
-						continue
-					self._callrelay(npre + name + nsuf + ' ' + text, udpobj, schannel='udp')
-				else:
-					self._callrelay(self._formatmctoirc(m.group(0)), udpobj, schannel='udp')
-				break
-			if not matched:
-				if self._isdeath(udpobj.message):
-					self._callrelay(self._formatmctoirc(udpobj.message), udpobj, schannel='udp')
-		elif udpobj.logger == 'mg':
-			for key in self._mgregp:
-				if not key in self._mgregs:
-					self._mgregs[key] = re.compile(self._mgregp[key], re.S)
-				m = self._mgregs[key].match(udpobj.message)
-
-				if m == None:
-					continue
-				if key == 'whitelist':
-					name = m.group(2)
-					ip = m.group(3)
-					self._callrelay('*** Connection from ' + ip + ' rejected (not whitelisted: ' + name + ')', udpobj, schannel='udp')
 		self._callrelay(None, udpobj, what='udp', schannel='udp')
 
 	def _callrelay(self, text, obj, type=None, name=None, channel=None, what='', schannel=''):
+		found = False
 		for key in self._relays:
 			if key != what and what != 'all':
 				continue
@@ -425,70 +410,17 @@ class client:
 					continue
 				if channel != None and rel.channel != channel.lower():
 					continue
+				found = True
 				rtext = text
 				if rel.extra['prefix'] != '' and text != None and text != '':
 					rtext = rel.extra['prefix'] + ' ' + text
 				relay.call(rtext, rel, relay.RelaySource('minecraft', self.name, schannel, {}), {'obj': obj})
-
-	def _cleanformatting(self, text):
-		s = text.replace(u'§0', '')
-		s = s.replace(u'§1', '')
-		s = s.replace(u'§2', '')
-		s = s.replace(u'§3', '')
-		s = s.replace(u'§4', '')
-		s = s.replace(u'§5', '')
-		s = s.replace(u'§6', '')
-		s = s.replace(u'§7', '')
-		s = s.replace(u'§8', '')
-		s = s.replace(u'§9', '')
-		s = s.replace(u'§a', '')
-		s = s.replace(u'§b', '')
-		s = s.replace(u'§c', '')
-		s = s.replace(u'§d', '')
-		s = s.replace(u'§e', '')
-		s = s.replace(u'§f', '')
-		s = s.replace(u'§k', '')
-		s = s.replace(u'§l', '')
-		s = s.replace(u'§m', '')
-		s = s.replace(u'§n', '')
-		s = s.replace(u'§o', '')
-		return s.replace(u'§r', '')
-
-	def _formatmctoirc(self, text):
-		s = text.replace(u'§0', '\x0301')
-		s = s.replace(u'§1', '\x0302')
-		s = s.replace(u'§2', '\x0303')
-		s = s.replace(u'§3', '\x0310')
-		s = s.replace(u'§4', '\x0305')
-		s = s.replace(u'§5', '\x0306')
-		s = s.replace(u'§6', '\x0307')
-		s = s.replace(u'§7', '\x0315')
-		s = s.replace(u'§8', '\x0314')
-		s = s.replace(u'§9', '\x0312')
-		s = s.replace(u'§a', '\x0309')
-		s = s.replace(u'§b', '\x0311')
-		s = s.replace(u'§c', '\x0304')
-		s = s.replace(u'§d', '\x0313')
-		s = s.replace(u'§e', '\x0308')
-		s = s.replace(u'§f', '\x0300')
-		s = s.replace(u'§k', '')
-		s = s.replace(u'§l', '\x02')
-		s = s.replace(u'§m', '')
-		s = s.replace(u'§n', '\x1F')
-		s = s.replace(u'§o', '\x1D')
-		return s.replace(u'§r', '\x0F')
-
-	def _isdeath(self, message):
-		if len(self._deathres) < 1:
-			for reg in self._deathreg:
-				self._deathres.append(re.compile(reg, re.S))
-
-		for reg in self._deathres:
-			m = reg.match(message)
-			if m != None:
-				return True
-
-		return False
+		if not found:
+			rel = relay.RelayTarget(type, name, channel, {}, None)
+			rtext = text
+			if text != None and text != '':
+				rtext = '[' + self.name + ']' + ' ' + text
+			relay.call(rtext, rel, relay.RelaySource('minecraft', self.name, schannel, {}), {'obj': obj})
 
 	def _schedconnect(self, freq=None):
 		if freq == None:
@@ -551,9 +483,9 @@ class client:
 				first = m.group(1)
 				if m.group(2) == '':
 					first = first[0:-1]
-				self._callrelay(first, rcon, rconcall['args'][0].type, rconcall['args'][0].name, rconcall['args'][0].channel, schannel='rcon')
+				self._callrelay(first, rcon, rconcall['args'][0].type, rconcall['args'][0].name, rconcall['args'][0].channel, what='rcon', schannel='rcon')
 				if m.group(2) != '':
-					self._callrelay(m.group(2), rcon, rconcall['args'][0].type, rconcall['args'][0].name, rconcall['args'][0].channel, schannel='rcon')
+					self._callrelay(m.group(2), rcon, rconcall['args'][0].type, rconcall['args'][0].name, rconcall['args'][0].channel, what='rcon', schannel='rcon')
 		except Exception as e:
 			log.log(LOG_ERROR, 'Error handling RCON players list response: ' + str(e), self)
 
@@ -561,7 +493,7 @@ class client:
 		if self._rconconnected:
 			if data.source.type == 'irc':
 				if data.extra['msg']['params'][-1][0:8] == '?players':
-					self._rconcommand('list', self._cmd_players, (data.source, data.extra['msg']))
+					self._rconcommand('list', self._cmd_players, [data.source, data.extra['msg']])
 					return
 			self._rconcommand('tellraw @a ' + json.dumps([data.text]))
 
@@ -673,10 +605,204 @@ class client:
 				self._udpsock.close()
 			self._udpsock = None
 
-	def relay_add(self, type, name, channel, prefix, what=None):
-		rel = relay.RelayTarget(type, name, channel, {'prefix': prefix})
+	def relay_add(self, type, name, channel, prefix, what=None, filters=None):
+		rel = relay.RelayTarget(type, name, channel, {'prefix': prefix}, filters)
 		if not what in self._relays:
 			self._relays[what] = [rel]
 		else:
 			self._relays[what].append(rel)
 		log.log(LOG_INFO, 'Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix=' + prefix + ')', self)
+
+class playerdeathfilter:
+	_deathreg = ['^.+? fell off a ladder$',
+			'^.+? fell off some vines$',
+			'^.+? fell out of the water$',
+			'^.+? fell from a high place$',
+			'^.+? was doomed to fall$',
+			'^.+? was doomed to fall by .+?$',
+			'^.+? was doomed to fall by .+? using .+?$',
+			'^.+? fell too far and was finished by .+?$',
+			'^.+? fell too far and was finished by .+? using .+?$',
+			'^.+? was struck by lightning$',
+			'^.+? went up in flames$',
+			'^.+? walked into fire whilst fighting .+?$',
+			'^.+? burned to death$',
+			'^.+? was burnt to a crisp whilst fighting .+?$',
+			'^.+? tried to swim in lava$',
+			'^.+? tried to swim in lava to escape .+?$',
+			'^.+? discovered floor was lava$',
+			'^.+? walked into danger zone due to .+?$',
+			'^.+? suffocated in a wall$',
+			'^.+? drowned$',
+			'^.+? drowned whilst trying to escape .+?$',
+			'^.+? starved to death$',
+			'^.+? was pricked to death$',
+			'^.+? walked into a cactus whilst trying to escape .+?$',
+			'^.+? died$',
+			'^.+? blew up$',
+			'^.+? was blown up by .+?$',
+			'^.+? was killed by magic$',
+			'^.+? withered away$',
+			'^.+? was squashed by a falling anvil$',
+			'^.+? was squashed by a falling block$',
+			'^.+? was slain by .+?$',
+			'^.+? was slain by .+? using .+?$',
+			'^.+? was shot by .+?$',
+			'^.+? was shot by .+? using .+?$',
+			'^.+? was fireballed by .+?$',
+			'^.+? was fireballed by .+? using .+?$',
+			'^.+? was pummeled by .+?$',
+			'^.+? was pummeled by .+? using .+?$',
+			'^.+? was killed by .+? using magic$',
+			'^.+? was killed by .+? using .+?$',
+			'^.+? was killed trying to hurt .+?$',
+			'^.+? hit the ground too hard$',
+			'^.+? fell out of the world$',
+			'^.+? was roasted in dragon breath$',
+			'^.+? experienced kinetic energy$']
+	_deathregc = []
+
+	def filter(self, data):
+		if data.source.type != 'minecraft' or \
+			data.source.channel != 'udp':
+			return None
+		if not 'obj' in data.extra:
+			return None
+		if type(data.extra['obj']) != MCUDPLogPacket:
+			return None
+		if data.extra['obj'].logger != 'net.minecraft.server.MinecraftServer':
+			return None
+
+		if len(self._deathregc) < 1:
+			for reg in self._deathreg:
+				self._deathregc.append(re.compile(reg, re.S))
+
+		for reg in self._deathregc:
+			m = reg.match(data.extra['obj'].message)
+			if m != None:
+				text = _formatmctoirc(data.extra['obj'].message)
+				if 'prefix' in data.target.extra and data.target.extra['prefix'] != None and data.target.extra['prefix'] != '':
+					text = data.target.extra['prefix'] + ' ' + text
+				ret = data._replace(text=text)
+				return ret
+
+		return None
+
+class playerjoinpartfilter:
+	_reg = {
+			'net.minecraft.server.MinecraftServer': {
+				'joinpart': '^([^\s]+) (\\(formerly known as .+?\\) )?(?:joined|left) the game$'
+				},
+			'mg': {
+				'whitelist': '^com.mojang.authlib.GameProfile.*?id=([-a-f0-9]+?),.*?name=([^,]+?),.+?\\(\\/([0-9\\.]+?):([0-9]+?)\\) lost connection: You are not white-listed on this server!.*$'
+				}
+			}
+	_regc = {
+			'net.minecraft.server.MinecraftServer': {},
+			'mg': {}
+			}
+
+	def filter(self, data):
+		if data.source.type != 'minecraft' or \
+			data.source.channel != 'udp':
+			return None
+		if not 'obj' in data.extra:
+			return None
+		if type(data.extra['obj']) != MCUDPLogPacket:
+			return None
+		if not data.extra['obj'].logger in self._reg:
+			return None
+
+		for key in self._reg[data.extra['obj'].logger]:
+			if not key in self._regc[data.extra['obj'].logger]:
+				self._regc[data.extra['obj'].logger][key] = re.compile(self._reg[data.extra['obj'].logger][key])
+
+			m = self._regc[data.extra['obj'].logger][key].match(data.extra['obj'].message)
+
+			if m != None:
+				ret = data
+				if key == 'joinpart':
+					ret = data._replace(text=_formatmctoirc(data.extra['obj'].message))
+				elif key == 'whitelist':
+					name = m.group(2)
+					ip = m.group(3)
+					text = '*** Connection from ' + ip + ' rejected (not whitelisted: ' + name + ')'
+					if 'prefix' in data.target.extra and data.target.extra['prefix'] != None and data.target.extra['prefix'] != '':
+						text = data.target.extra['prefix'] + ' ' + text
+					ret = data._replace(text=text)
+				return ret
+
+class playerchatfilter:
+	_reg = {
+			'net.minecraft.server.MinecraftServer': {
+				'chatmsg': '^([\\[<])([^ ]+?)([\\]>]) (.*)$',
+				'chatact': '^\\* ([^ ]+) (.*)$',
+				'achievment': '^([^\s]+?) has (lost|just earned) the achievement \[.*?\]$'
+				},
+			}
+	_regc = {
+			'net.minecraft.server.MinecraftServer': {}
+			}
+
+	def filter(self, data):
+		if data.source.type != 'minecraft' or \
+			data.source.channel != 'udp':
+			return None
+		if not 'obj' in data.extra:
+			return None
+		if type(data.extra['obj']) != MCUDPLogPacket:
+			return None
+		if not data.extra['obj'].logger in self._reg:
+			return None
+
+		for key in self._reg[data.extra['obj'].logger]:
+			if not key in self._regc[data.extra['obj'].logger]:
+				self._regc[data.extra['obj'].logger][key] = re.compile(self._reg[data.extra['obj'].logger][key])
+
+			m = self._regc[data.extra['obj'].logger][key].match(data.extra['obj'].message)
+
+			if m != None:
+				ret = data
+				text = _formatmctoirc(data.extra['obj'].message)
+				if key == 'chatmsg' or key == 'chatact':
+					name = ''
+					npre = ''
+					nsuf = ''
+					text = ''
+					if key == 'chatmsg':
+						npre = m.group(1)
+						name = m.group(2)
+						nsuf = m.group(3)
+						text = m.group(4)
+					else:
+						npre = '* '
+						name = m.group(1)
+						text = m.group(2)
+					name = _formatmctoirc(name)
+					text = npre + name + nsuf + ' ' + _formatmctoirc(text)
+				if 'prefix' in data.target.extra and data.target.extra['prefix'] != None and data.target.extra['prefix'] != '':
+					text = data.target.extra['prefix'] + ' ' + text
+				ret = data._replace(text=text)
+				return ret
+
+class overviewerfilter:
+	def filter(self, data):
+		if data.source.type != 'minecraft' or \
+			data.source.channel != 'udp':
+			return None
+		if not 'obj' in data.extra:
+			return None
+		if type(data.extra['obj']) != MCUDPLogPacket:
+			return None
+		if not data.extra['obj'].logger in ['crontab.overviewer', 'crontab.overviewerpoi']:
+			return None
+
+		text = data.extra['obj'].message
+		if 'prefix' in data.target.extra and data.target.extra['prefix'] != None and data.target.extra['prefix'] != '':
+			text = data.target.extra['prefix'] + ' ' + text
+		return data._replace(text=text)
+
+filterobjs['playerdeath'] = playerdeathfilter()
+filterobjs['playerjoinpart'] = playerjoinpartfilter()
+filterobjs['playerchat'] = playerchatfilter()
+filterobjs['overviewer'] = overviewerfilter()

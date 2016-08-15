@@ -26,7 +26,7 @@ from core.rblogging import *
 
 relaybindings = []
 RelayBinding = namedtuple('RelayBinding', ['type', 'name', 'callback'])
-RelayTarget = namedtuple('RelayTarget', ['type', 'name', 'channel', 'extra'])
+RelayTarget = namedtuple('RelayTarget', ['type', 'name', 'channel', 'extra', 'filters'])
 RelaySource = namedtuple('RelaySource', ['type', 'name', 'channel', 'extra'])
 RelayData = namedtuple('RelayData', ['text', 'source', 'target', 'extra'])
 
@@ -55,6 +55,22 @@ def call(text, target, source, extra):
 	global relaybindings
 	data = RelayData(text, source, target, extra)
 	log.log(LOG_DEBUG, 'Attempting to call relays (type:' + target.type + ', name:' + target.name + ', channel:' + target.channel + ')')
+	if target.filters != None and len(target.filters) > 0:
+		matched = False
+		for filt in target.filters:
+			try:
+				if not hasattr(filt, 'filter'):
+					log.log(LOG_ERROR, 'Filter without filter() method: ' + str(filt))
+					continue
+				ret = filt.filter(data)
+				if ret != None:
+					matched = True
+					data = ret
+			except Exception as e:
+				log.log(LOG_ERROR, 'Error testing filter ' + str(filt) + ' for relay data: ' + str(e))
+				return
+		if not matched:
+			return
 	for bind in relaybindings:
 		if bind.type == target.type and bind.name == target.name:
 			if bind.callback != None:
