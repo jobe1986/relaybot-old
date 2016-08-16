@@ -24,8 +24,11 @@ from collections import namedtuple
 
 from core.rblogging import *
 
+# Filter does not match message, message should only be relayed if another filter matches
 FILTER_NOMATCH = 0
+# Filter matches message and message should be relayed
 FILTER_MATCH = 1
+# Filter matches message but message should not be relayed at all
 FILTER_BLOCK = 2
 
 relaybindings = []
