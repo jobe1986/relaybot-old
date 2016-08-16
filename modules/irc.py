@@ -525,6 +525,7 @@ class client:
 		self._performdone = False
 		self._iscap = False
 		self._disconnecting = False
+		self._server['curserver'] = self._server['server']
 		for ev in self._schedevs:
 			self._deltimer(self._schedevs[ev])
 		for chan in self._channels:
