@@ -149,7 +149,7 @@ def sockets():
 class client:
 	sockets = []
 
-	def __init__(self, name, connfreq=10, pingfreq=120, capdelay=3, schedobj=None, schedpri=100,
+	def __init__(self, name, connfreq=30, pingfreq=120, capdelay=3, schedobj=None, schedpri=100,
 				nick='IRCBot', user='IRCBot', gecos='IRCBot',
 				server='localhost', port=6667, serverpassword=None, performs=[]):
 		self.name = name
