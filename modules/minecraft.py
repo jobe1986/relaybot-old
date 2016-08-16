@@ -665,13 +665,13 @@ class playerdeathfilter:
 	def filter(self, data):
 		if data.source.type != 'minecraft' or \
 			data.source.channel != 'udp':
-			return None
+			return relay.FILTER_NOMATCH, None
 		if not 'obj' in data.extra:
-			return None
+			return relay.FILTER_NOMATCH, None
 		if type(data.extra['obj']) != MCUDPLogPacket:
-			return None
+			return relay.FILTER_NOMATCH, None
 		if data.extra['obj'].logger != 'net.minecraft.server.MinecraftServer':
-			return None
+			return relay.FILTER_NOMATCH, None
 
 		if len(self._deathregc) < 1:
 			for reg in self._deathreg:
@@ -684,9 +684,9 @@ class playerdeathfilter:
 				if 'prefix' in data.target.extra and data.target.extra['prefix'] != None and data.target.extra['prefix'] != '':
 					text = data.target.extra['prefix'] + ' ' + text
 				ret = data._replace(text=text)
-				return ret
+				return relay.FILTER_MATCH, ret
 
-		return None
+		return relay.FILTER_NOMATCH, None
 
 class playerjoinpartfilter:
 	_reg = {
@@ -705,13 +705,13 @@ class playerjoinpartfilter:
 	def filter(self, data):
 		if data.source.type != 'minecraft' or \
 			data.source.channel != 'udp':
-			return None
+			return relay.FILTER_NOMATCH, None
 		if not 'obj' in data.extra:
-			return None
+			return relay.FILTER_NOMATCH, None
 		if type(data.extra['obj']) != MCUDPLogPacket:
-			return None
+			return relay.FILTER_NOMATCH, None
 		if not data.extra['obj'].logger in self._reg:
-			return None
+			return relay.FILTER_NOMATCH, None
 
 		for key in self._reg[data.extra['obj'].logger]:
 			if not key in self._regc[data.extra['obj'].logger]:
@@ -730,7 +730,8 @@ class playerjoinpartfilter:
 					if 'prefix' in data.target.extra and data.target.extra['prefix'] != None and data.target.extra['prefix'] != '':
 						text = data.target.extra['prefix'] + ' ' + text
 					ret = data._replace(text=text)
-				return ret
+				return relay.FILTER_MATCH, ret
+		return relay.FILTER_NOMATCH, None
 
 class playerchatfilter:
 	_reg = {
@@ -747,13 +748,13 @@ class playerchatfilter:
 	def filter(self, data):
 		if data.source.type != 'minecraft' or \
 			data.source.channel != 'udp':
-			return None
+			return relay.FILTER_NOMATCH, None
 		if not 'obj' in data.extra:
-			return None
+			return relay.FILTER_NOMATCH, None
 		if type(data.extra['obj']) != MCUDPLogPacket:
-			return None
+			return relay.FILTER_NOMATCH, None
 		if not data.extra['obj'].logger in self._reg:
-			return None
+			return relay.FILTER_NOMATCH, None
 
 		for key in self._reg[data.extra['obj'].logger]:
 			if not key in self._regc[data.extra['obj'].logger]:
@@ -783,24 +784,25 @@ class playerchatfilter:
 				if 'prefix' in data.target.extra and data.target.extra['prefix'] != None and data.target.extra['prefix'] != '':
 					text = data.target.extra['prefix'] + ' ' + text
 				ret = data._replace(text=text)
-				return ret
+				return relay.FILTER_MATCH, ret
+		return relay.FILTER_NOMATCH, None
 
 class overviewerfilter:
 	def filter(self, data):
 		if data.source.type != 'minecraft' or \
 			data.source.channel != 'udp':
-			return None
+			return relay.FILTER_NOMATCH, None
 		if not 'obj' in data.extra:
-			return None
+			return relay.FILTER_NOMATCH, None
 		if type(data.extra['obj']) != MCUDPLogPacket:
-			return None
+			return relay.FILTER_NOMATCH, None
 		if not data.extra['obj'].logger in ['crontab.overviewer', 'crontab.overviewerpoi']:
-			return None
+			return relay.FILTER_NOMATCH, None
 
 		text = data.extra['obj'].message
 		if 'prefix' in data.target.extra and data.target.extra['prefix'] != None and data.target.extra['prefix'] != '':
 			text = data.target.extra['prefix'] + ' ' + text
-		return data._replace(text=text)
+		return relay.FILTER_MATCH, data._replace(text=text)
 
 filterobjs['playerdeath'] = playerdeathfilter()
 filterobjs['playerjoinpart'] = playerjoinpartfilter()

@@ -24,6 +24,10 @@ from collections import namedtuple
 
 from core.rblogging import *
 
+FILTER_NOMATCH = 0
+FILTER_MATCH = 1
+FILTER_BLOCK = 2
+
 relaybindings = []
 RelayBinding = namedtuple('RelayBinding', ['type', 'name', 'callback'])
 RelayTarget = namedtuple('RelayTarget', ['type', 'name', 'channel', 'extra', 'filters'])
@@ -62,10 +66,13 @@ def call(text, target, source, extra):
 				if not hasattr(filt, 'filter'):
 					log.log(LOG_ERROR, 'Filter without filter() method: ' + str(filt))
 					continue
-				ret = filt.filter(data)
-				if ret != None:
-					matched = True
-					data = ret
+				res, datares = filt.filter(data)
+				if res == FILTER_BLOCK:
+					return
+				elif res == FILTER_MATCH:
+					if datares != None:
+						matched = True
+						data = datares
 			except Exception as e:
 				log.log(LOG_ERROR, 'Error testing filter ' + str(filt) + ' for relay data: ' + str(e))
 				return
