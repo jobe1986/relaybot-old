@@ -29,6 +29,7 @@ import core.relay as relay
 
 MCRConPacket = namedtuple('MCRConPacket', ['id', 'type', 'payload'])
 MCUDPLogPacket = namedtuple('MCUDPLogPacket', ['timestamp', 'logger', 'message', 'thread', 'level'])
+MCRConCallback = namedtuple('MCRConCallback', ['callback', 'time', 'args', 'command'])
 
 configs = {}
 clients = {}
@@ -457,15 +458,17 @@ class client:
 		if rcon.id == -1 and rcon.type == 2:
 			self.disconnect()
 			log.log(LOG_ERROR, 'RCON Unable to login to RCON, will not attempt to reconnect', self)
-		if rcon.type == 2:
+		elif rcon.type == 2:
 			self._rconconnected = True
 			self._deltimer(self._schedevs['login'])
 			self._schedevs['login'] = None
 			log.log(LOG_INFO, 'RCON Sucessfully logged in to RCON', self)
-		if rcon.type == 0:
+			self._callrelay(None, rcon, what='rcon', schannel='rcon')
+		elif rcon.type == 0:
 			if rcon.id in self._rconcalls:
-				if self._rconcalls[rcon.id]['callback'] != None:
-					self._rconcalls[rcon.id]['callback'](rcon, self._rconcalls[rcon.id])
+				log.log(LOG_DEBUG, 'Handling callback for RCON response', self)
+				if self._rconcalls[rcon.id].callback != None:
+					self._rconcalls[rcon.id].callback(rcon, self._rconcalls[rcon.id])
 				del self._rconcalls[rcon.id]
 
 	def _rcontimeout(self):
@@ -483,9 +486,9 @@ class client:
 				first = m.group(1)
 				if m.group(2) == '':
 					first = first[0:-1]
-				self._callrelay(first, rcon, rconcall['args'][0].type, rconcall['args'][0].name, rconcall['args'][0].channel, what='rcon', schannel='rcon')
+				self._callrelay(first, rcon, rconcall.args[0].type, rconcall.args[0].name, rconcall.args[0].channel, what='rcon', schannel='rcon')
 				if m.group(2) != '':
-					self._callrelay(m.group(2), rcon, rconcall['args'][0].type, rconcall['args'][0].name, rconcall['args'][0].channel, what='rcon', schannel='rcon')
+					self._callrelay(m.group(2), rcon, rconcall.args[0].type, rconcall.args[0].name, rconcall.args[0].channel, what='rcon', schannel='rcon')
 		except Exception as e:
 			log.log(LOG_ERROR, 'Error handling RCON players list response: ' + str(e), self)
 
@@ -495,12 +498,21 @@ class client:
 				if data.extra['msg']['params'][-1][0:8] == '?players':
 					self._rconcommand('list', self._cmd_players, [data.source, data.extra['msg']])
 					return
-			self._rconcommand('tellraw @a ' + json.dumps([data.text]))
+			if data.target.channel == 'rcon':
+				callback = None
+				args = None
+				if 'callback' in data.extra:
+					callback = data.extra['callback']
+				if 'args' in data.extra:
+					args = data.extra['args']
+				self._rconcommand(data.text, callback, args)
+			else:
+				self._rconcommand('tellraw @a ' + json.dumps([data.text]))
 
 	def _rconexpirecalls(self):
 		delids = []
 		for id in self._rconcalls:
-			if self._rconcalls[id]['time'] + self._rconexpiretimeout > time.time():
+			if self._rconcalls[id].time + self._rconexpiretimeout > time.time():
 				log.log(LOG_INFO, 'Expiring RCON callback: ' + str(self._rconcalls[id]), self)
 				delids.append(id)
 		for id in delids:
@@ -512,7 +524,7 @@ class client:
 		self._rconid = self._rconid + 1
 
 		if callback != None:
-			self._rconcalls[id] = {'callback': callback, 'time': time.time(), 'args': args, 'command': command}
+			self._rconcalls[id] = MCRConCallback(callback=callback, time=time.time(), args=args, command=command)
 
 		self._rconsend(id, 2, command)
 
