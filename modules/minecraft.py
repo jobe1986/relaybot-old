@@ -261,6 +261,7 @@ class client:
 		self._rconconnected = False
 		self._rconid = 0
 		self._rconbuf = ''
+		self._rconidbuf = {'id': -1, 'buf': ''}
 		self._udp = {'host': udphost, 'port': udpport}
 		self._udpsock = None
 		self._sched = schedobj
@@ -350,7 +351,7 @@ class client:
 					log.log(LOG_ERROR, 'Error handling UDP log packet: ' + str(e), self)
 		if sock == self._rconsock:
 			try:
-				buf = self._rconsock.recv(4110)
+				buf = self._rconsock.recv(4096)
 			except:
 				buf = ''
 			if buf != '':
@@ -370,7 +371,9 @@ class client:
 
 					log.log(LOG_DEBUG, 'RCON Parsing packet: ' + binascii.hexlify(self._rconbuf[:size + 4]), self)
 					packet = self._rconbuf[4:size + 4]
-					self._rconbuf = self._rconbuf[size + 5:]
+					self._rconbuf = self._rconbuf[size + 4:]
+					if self._rconbuf != '':
+						log.log(LOG_DEBUG, 'RCON Remaining packet: ' + binascii.hexlify(self._rconbuf), self)
 
 					if size == 10:
 						payload = ''
@@ -383,12 +386,21 @@ class client:
 
 					log.log(LOG_DEBUG, 'RCON <-- id:' + str(idin) + ', type:' + str(type) + ', payload:' + payload, self)
 
-					rcon = MCRConPacket(idin, type, payload)
+					if self._rconidbuf['id'] != idin:
+						if self._rconidbuf['id'] != -1:
+							log.log(LOG_DEBUG, 'RCON Unparsed packet being dropped with id ' + self._rconidbuf['id'], self)
+						self._rconidbuf = {'id': idin, 'buf': ''}
+					self._rconidbuf['buf'] = self._rconidbuf['buf'] + payload
 
-					try:
-						self._rconhandle(rcon)
-					except Exception as e:
-						log.log(LOG_ERROR, 'Error handling RCON packet: ' + str(e), self)
+					if size != 4106:
+						rcon = MCRConPacket(idin, type, self._rconidbuf['buf'])
+						log.log(LOG_DEBUG, 'RCON Handling packet: ' + str(rcon), self)
+						self._rconidbuf = {'id': -1, 'buf': ''}
+
+						try:
+							self._rconhandle(rcon)
+						except Exception as e:
+							log.log(LOG_ERROR, 'Error handling RCON packet: ' + str(e), self)
 
 	def _doerr(self, sock):
 		return
