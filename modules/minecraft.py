@@ -534,6 +534,8 @@ class client:
 	def _rconcommand(self, command, callback=None, args=None):
 		id = self._rconid
 		self._rconid = self._rconid + 1
+		if self._rconid > 0xffffffff:
+			self._rconid = 0
 
 		if callback != None:
 			self._rconcalls[id] = MCRConCallback(callback=callback, time=time.time(), args=args, command=command)
