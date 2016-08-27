@@ -31,16 +31,14 @@ import logging, logging.handlers, sys, time, json
 
 __all__ = ['log', 'LOG_CRITICAL', 'LOG_ERROR', 'LOG_WARNING', 'LOG_INFO', 'LOG_PROTOCOL', 'LOG_DEBUG']
 
-LOG_CRITICAL = logging.CRITICAL
-LOG_ERROR = logging.ERROR
-LOG_WARNING = logging.WARNING
-LOG_INFO = logging.INFO
-LOG_PROTOCOL = logging.DEBUG + 5
-LOG_DEBUG = logging.DEBUG
+LOG_CRITICAL = 50
+LOG_ERROR = 40
+LOG_WARNING = 30
+LOG_INFO = 20
+LOG_PROTOCOL = 15
+LOG_DEBUG = 10
 
 levels = {'DEBUG': LOG_DEBUG, 'PROTOCOL': LOG_PROTOCOL, 'INFO': LOG_INFO, 'WARNING': LOG_WARNING, 'ERROR': LOG_ERROR, 'CRITICAL': LOG_CRITICAL}
-
-logging.addLevelName(LOG_PROTOCOL, 'PROTOCOL')
 
 class UTCFormatter(logging.Formatter):
 	converter = time.gmtime
@@ -167,6 +165,9 @@ def runconfig():
 
 		loghandler.setLevel(levels[outconf['level']])
 		log.addHandler(loghandler)
+
+for name in levels:
+	logging.addLevelName(levels[name], name)
 
 logging.setLoggerClass(MyLogger)
 log = logging.getLogger('relaybot')
