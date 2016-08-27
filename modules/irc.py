@@ -272,7 +272,7 @@ class client:
 	def _doline(self, line):
 		if ((line == None) or (line == '')):
 			return
-		log.log(LOG_DEBUG, '<-- ' + line, self)
+		log.log(LOG_PROTOCOL, '<-- ' + line, self)
 		msg = self._parse_raw(line)
 		self._execmsg(msg)
 
@@ -549,7 +549,7 @@ class client:
 			self.disconnect('', False)
 			self._schedconnect()
 			return
-		log.log(LOG_DEBUG, '--> ' + line, self)
+		log.log(LOG_PROTOCOL, '--> ' + line, self)
 
 	def channel_add(self, channel):
 		if channel == None or channel == '':
@@ -566,7 +566,7 @@ class client:
 				self._relays[relchan.lower()].append(rel)
 		else:
 			self._relays[relchan.lower()] = [rel]
-		log.log(LOG_INFO, 'Added relay rule for channel ' + relchan + ' (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix:' + prefix + ')', self)
+		log.log(LOG_DEBUG, 'Added relay rule for channel ' + relchan + ' (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix:' + prefix + ')', self)
 
 	def doread(self, sock):
 		if self._sock != sock:

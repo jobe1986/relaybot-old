@@ -25,16 +25,22 @@ import logging, logging.handlers, sys, time, json
 #logging.ERROR = 40
 #logging.WARNING = 30
 #logging.INFO = 20
+#LOG_PROTOCOL = 15
 #logging.DEBUG = 10
 #logging.NOTSET = 0
 
-__all__ = ['log', 'LOG_CRITICAL', 'LOG_ERROR', 'LOG_WARNING', 'LOG_INFO', 'LOG_DEBUG']
+__all__ = ['log', 'LOG_CRITICAL', 'LOG_ERROR', 'LOG_WARNING', 'LOG_INFO', 'LOG_PROTOCOL', 'LOG_DEBUG']
 
 LOG_CRITICAL = logging.CRITICAL
 LOG_ERROR = logging.ERROR
 LOG_WARNING = logging.WARNING
 LOG_INFO = logging.INFO
+LOG_PROTOCOL = logging.DEBUG + 5
 LOG_DEBUG = logging.DEBUG
+
+levels = {'DEBUG': LOG_DEBUG, 'PROTOCOL': LOG_PROTOCOL, 'INFO': LOG_INFO, 'WARNING': LOG_WARNING, 'ERROR': LOG_ERROR, 'CRITICAL': LOG_CRITICAL}
+
+logging.addLevelName(LOG_PROTOCOL, 'PROTOCOL')
 
 class UTCFormatter(logging.Formatter):
 	converter = time.gmtime
@@ -94,6 +100,7 @@ class MyLogger(logging.Logger):
 
 def loadconfig(doc):
 	global configs
+	global levels
 
 	configs = {'outputs': []}
 
@@ -131,7 +138,7 @@ def loadconfig(doc):
 				else:
 					outconf['rollover'] = out.attrib['rollover'].lower()
 
-		if 'level' in out.attrib and out.attrib['level'].upper() in ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']:
+		if 'level' in out.attrib and out.attrib['level'].upper() in levels:
 			outconf['level'] = out.attrib['level']
 		else:
 			outconf['level'] = 'INFO'
@@ -141,6 +148,7 @@ def loadconfig(doc):
 def runconfig():
 	global configs
 	global log
+	global levels
 
 	for outconf in configs['outputs']:
 		if outconf['type'] == 'stdout':
@@ -156,8 +164,6 @@ def runconfig():
 				loghandler = logging.handlers.RotatingFileHandler(outconf['path'], maxBytes=outconf['rollover'], backupCount=10)
 		logformatter = UTCFormatter('[%(asctime)s] [%(modname)s/%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
 		loghandler.setFormatter(logformatter)
-
-		levels = {'DEBUG': logging.DEBUG, 'INFO': logging.INFO, 'WARNING': logging.WARNING, 'ERROR': logging.ERROR, 'CRITICAL': logging.CRITICAL}
 
 		loghandler.setLevel(levels[outconf['level']])
 		log.addHandler(loghandler)

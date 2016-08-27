@@ -27,8 +27,8 @@
 		over when it reaches the number of bytes specified in size)
 
 		Each <output> block can also have a 'level' attribute which must be one of
-		'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL'. If not specified then the
-		level 'INFO' is assumed.
+		'DEBUG', 'PROTOCOL', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL'. If not specified
+		then the level 'INFO' is assumed.
 	-->
 	<logging>
 		<output type="file" path="logs/relaybot.log" rollover="midnight" level="DEBUG"/>

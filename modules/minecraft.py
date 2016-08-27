@@ -330,7 +330,7 @@ class client:
 				buf = ''
 				src = ('0.0.0.0', 0)
 			if buf != '':
-				log.log(LOG_DEBUG, 'UDP:[' + src[0] + ']:' + str(src[1]) + ' <-- ' + buf, self)
+				log.log(LOG_PROTOCOL, 'UDP:[' + src[0] + ']:' + str(src[1]) + ' <-- ' + buf, self)
 				if buf[0] == ',':
 					buf = buf[1:]
 				try:
@@ -348,12 +348,19 @@ class client:
 					udpobj = MCUDPLogPacket(jsonobj['timestamp'], jsonobj['logger'], jsonobj['message'], jsonobj['thread'], jsonobj['level'])
 					self._handleudp(udpobj)
 				except Exception as e:
-					log.log(LOG_ERROR, 'Error handling UDP log packet: ' + str(e), self)
+					log.log(LOG_ERROR, 'UDP Error handling UDP log packet: ' + str(e), self)
 		if sock == self._rconsock:
 			try:
 				buf = self._rconsock.recv(4096)
 			except:
 				buf = ''
+
+			if (buf == ''):
+				log.log(LOG_INFO, 'RCON Received no data from ' + self._rcon['host'] + ', attemoting to reconnect', self)
+				self.disconnect('', False)
+				self._schedconnect()
+				return
+
 			if buf != '':
 				log.log(LOG_DEBUG, 'RCON <-- ' + binascii.hexlify(buf), self)
 
@@ -384,7 +391,7 @@ class client:
 						log.log(LOG_DEBUG, 'RCON Packet with erroneous length (' + str(size) + '): ' + binascii.hexlify(packet), self)
 						continue
 
-					log.log(LOG_DEBUG, 'RCON <-- id:' + str(idin) + ', type:' + str(type) + ', payload:' + payload, self)
+					log.log(LOG_PROTOCOL, 'RCON <-- id:' + str(idin) + ', type:' + str(type) + ', payload:' + payload, self)
 
 					if self._rconidbuf['id'] != idin:
 						if self._rconidbuf['id'] != -1:
@@ -400,7 +407,7 @@ class client:
 						try:
 							self._rconhandle(rcon)
 						except Exception as e:
-							log.log(LOG_ERROR, 'Error handling RCON packet: ' + str(e), self)
+							log.log(LOG_ERROR, 'RCON Error handling RCON packet: ' + str(e), self)
 
 	def _doerr(self, sock):
 		return
@@ -441,7 +448,7 @@ class client:
 		if self._schedevs['conn'] != None:
 			return
 		self._schedevs['conn'] = self._addtimer(delay=freq, callback=self.connect)
-		log.log(LOG_INFO, 'Attempting to reconnect in ' + str(freq) + ' seconds', self)
+		log.log(LOG_INFO, 'RCON Attempting to reconnect in ' + str(freq) + ' seconds', self)
 
 	def _rconsend(self, id=0, type=0, payload=None):
 		if self._rconsock == None:
@@ -457,7 +464,7 @@ class client:
 		packet = pack('<i', len(packet)) + packet
 
 		log.log(LOG_DEBUG, 'RCON --> ' + binascii.hexlify(packet), self)
-		log.log(LOG_DEBUG, 'RCON --> id:' + str(id) + ', type:' + str(type) + ', payload:' + payload, self)
+		log.log(LOG_PROTOCOL, 'RCON --> id:' + str(id) + ', type:' + str(type) + ', payload:' + payload, self)
 
 		try:
 			self._rconsock.send(packet)
@@ -478,7 +485,7 @@ class client:
 			self._callrelay(None, rcon, what='rcon', schannel='rcon')
 		elif rcon.type == 0:
 			if rcon.id in self._rconcalls:
-				log.log(LOG_DEBUG, 'Handling callback for RCON response', self)
+				log.log(LOG_DEBUG, 'RCON Handling callback for RCON response', self)
 				if self._rconcalls[rcon.id].callback != None:
 					self._rconcalls[rcon.id].callback(rcon, self._rconcalls[rcon.id])
 				del self._rconcalls[rcon.id]
@@ -502,7 +509,7 @@ class client:
 				if m.group(2) != '':
 					self._callrelay(m.group(2), rcon, rconcall.args[0].type, rconcall.args[0].name, rconcall.args[0].channel, what='rcon', schannel='rcon')
 		except Exception as e:
-			log.log(LOG_ERROR, 'Error handling RCON players list response: ' + str(e), self)
+			log.log(LOG_ERROR, 'RCON Error handling RCON players list response: ' + str(e), self)
 
 	def _relaycallback(self, data):
 		if self._rconconnected:
@@ -525,7 +532,7 @@ class client:
 		delids = []
 		for id in self._rconcalls:
 			if self._rconcalls[id].time + self._rconexpiretimeout > time.time():
-				log.log(LOG_INFO, 'Expiring RCON callback: ' + str(self._rconcalls[id]), self)
+				log.log(LOG_DEBUG, 'RCON Expiring RCON callback: ' + str(self._rconcalls[id]), self)
 				delids.append(id)
 		for id in delids:
 			del self._rconcalls[id]
@@ -547,6 +554,8 @@ class client:
 		self._rconconnected = False
 
 		if reconudp or self._udpsock == None:
+			log.log(LOG_INFO, 'UDP Attempting to bind to ' + self._udp['host'] + ' on port ' + str(self._udp['port']), self)
+
 			if self._udpsock != None:
 				self._udpsock.close()
 				self._udpsock = None
@@ -554,7 +563,7 @@ class client:
 			try:
 				addrs = socket.getaddrinfo(self._udp['host'], self._udp['port'], 0, 0, socket.IPPROTO_UDP)
 			except Exception as e:
-				log.log(LOG_ERROR, 'Error binding UDP socket: ' + str(e), self)
+				log.log(LOG_ERROR, 'UDP Error binding UDP socket: ' + str(e), self)
 
 			if len(addrs) < 1:
 				return
@@ -563,22 +572,26 @@ class client:
 			try:
 				s = rbsocket.rbsocket(af, socktype, proto)
 			except Exception as e:
-				log.log(LOG_ERROR, 'Error creating UDP socket: ' + str(e), self)
+				log.log(LOG_ERROR, 'UDP Error creating UDP socket: ' + str(e), self)
 				return
 
 			try:
 				s.bind(sa)
 			except Exception as e:
-				log.log(LOG_ERROR, 'Error binding UDP socket: ' + str(e), self)
+				log.log(LOG_ERROR, 'UDP Error binding UDP socket: ' + str(e), self)
 				return
 
 			self._udpsock = s
+
+			log.log(LOG_INFO, 'UDP Bound to ' + self._udp['host'] + ' on port ' + str(self._udp['port']), self)
+
+		log.log(LOG_INFO, 'RCON Attempting to connect to ' + self._rcon['host'] + ' on port ' + str(self._rcon['port']), self)
 
 		addrs = []
 		try:
 			addrs = socket.getaddrinfo(self._rcon['host'], self._rcon['port'], 0, 0, socket.IPPROTO_TCP)
 		except Exception as e:
-			log.log(LOG_ERROR, 'Error connecting rcon socket: ' + str(e), self)
+			log.log(LOG_ERROR, 'RCON Error connecting rcon socket: ' + str(e), self)
 
 		if len(addrs) < 1:
 			return
@@ -601,7 +614,7 @@ class client:
 			break
 
 		if s == None:
-			log.log(LOG_ERROR, 'Error connecting to rcon', self)
+			log.log(LOG_ERROR, 'RCON Error connecting to rcon', self)
 			self._schedconnect()
 			return
 
@@ -615,7 +628,7 @@ class client:
 
 		self._addsock()
 
-		log.log(LOG_INFO, 'Connected to rcon socket, waiting for logon confirmation', self)
+		log.log(LOG_INFO, 'RCON Connected to rcon socket, waiting for logon confirmation', self)
 
 	def disconnect(self, reason = '', sendexit = True, closeudp = False):
 		self._delsock(closeudp)
@@ -637,7 +650,7 @@ class client:
 			self._relays[what] = [rel]
 		else:
 			self._relays[what].append(rel)
-		log.log(LOG_INFO, 'Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix=' + prefix + ')', self)
+		log.log(LOG_DEBUG, 'Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix=' + prefix + ')', self)
 
 class playerdeathfilter:
 	_deathreg = ['^.+? fell off a ladder$',
