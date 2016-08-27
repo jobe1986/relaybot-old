@@ -554,7 +554,7 @@ class client:
 		self._rconconnected = False
 
 		if reconudp or self._udpsock == None:
-			log.log(LOG_INFO, 'UDP Attempting to bind to ' + self._udp['host'] + ' on port ' + str(self._udp['port']), self)
+			log.log(LOG_INFO, 'UDP Attempting to bind to port ' + str(self._udp['port']) + ' on host ' + self._udp['host'], self)
 
 			if self._udpsock != None:
 				self._udpsock.close()
@@ -583,7 +583,7 @@ class client:
 
 			self._udpsock = s
 
-			log.log(LOG_INFO, 'UDP Bound to ' + self._udp['host'] + ' on port ' + str(self._udp['port']), self)
+			log.log(LOG_INFO, 'UDP Bound to port ' + str(self._udp['port']) + ' on host ' + self._udp['host'], self)
 
 		log.log(LOG_INFO, 'RCON Attempting to connect to ' + self._rcon['host'] + ' on port ' + str(self._rcon['port']), self)
 
