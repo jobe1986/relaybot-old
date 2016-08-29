@@ -392,6 +392,8 @@ class client:
 			if self._schedevs['nick'] != None:
 				self._deltimer(self._schedevs['nick'])
 				self._schedevs['nick'] = None
+			if self._myid['nick'].lower() != self._myid['curnick'].lower():
+				self._renick()
 
 	def _m_cap(self, msg):
 		if not self._iscap:
