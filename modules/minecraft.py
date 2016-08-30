@@ -552,6 +552,9 @@ class client:
 	def connect(self, reconudp=False):
 		self._rconsock = None
 		self._rconconnected = False
+		if self._schedevs['conn'] != None:
+			self._deltimer(self._schedevs['conn'])
+		self._schedevs['conn'] = None
 
 		if reconudp or self._udpsock == None:
 			log.log(LOG_INFO, 'UDP Attempting to bind to port ' + str(self._udp['port']) + ' on host ' + self._udp['host'], self)
@@ -597,6 +600,7 @@ class client:
 			return
 
 		s = None
+		ex = []
 		for addr in addrs:
 			af, socktype, proto, canonname, sa = addr
 			try:
@@ -610,11 +614,12 @@ class client:
 			except Exception as e:
 				s.close()
 				s = None
+				ex.append(e)
 				continue
 			break
 
 		if s == None:
-			log.log(LOG_ERROR, 'RCON Error connecting to rcon', self)
+			log.log(LOG_ERROR, 'RCON Error connecting to rcon: ' + str(ex[-1]), self)
 			self._schedconnect()
 			return
 
