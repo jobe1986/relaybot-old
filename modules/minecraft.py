@@ -691,7 +691,6 @@ class playerdeathfilter:
 			'^.+? was squashed by a falling anvil$',
 			'^.+? was squashed by a falling block$',
 			'^.+? was slain by .+?$',
-			'^.+? was slain by .+?$',
 			'^.+? was slain by .+? using .+?$',
 			'^.+? was shot by .+?$',
 			'^.+? was shot by .+? using .+?$',
