@@ -738,13 +738,13 @@ class playerjoinpartfilter:
 			'net.minecraft.server.MinecraftServer': {
 				'joinpart': '^([^\s]+) (\\(formerly known as .+?\\) )?(?:joined|left) the game$'
 				},
-			'mg': {
+			'mk': {
 				'whitelist': '^com.mojang.authlib.GameProfile.*?id=([-a-f0-9]+?),.*?name=([^,]+?),.+?\\(\\/([0-9\\.]+?):([0-9]+?)\\) lost connection: You are not white-listed on this server!.*$'
 				}
 			}
 	_regc = {
 			'net.minecraft.server.MinecraftServer': {},
-			'mg': {}
+			'mk': {}
 			}
 
 	def filter(self, data):
