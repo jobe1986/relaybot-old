@@ -13,3 +13,7 @@ Installation is simple, once downloaded you need only copy
 conf/exampleconfig.xml to conf/config.xml, read the enclosed comments
 and configure as necesary. After completing conf/config.xml you will then be
 able to run the bot using 'python run.py'
+
+CONTACT/SUPPORT:
+If you need any help, support or just want to say thanks, feel free to drop
+by the IRC channel #minecraft on irc.afternet.org
