@@ -768,7 +768,10 @@ class playerjoinpartfilter:
 			if m != None:
 				ret = data
 				if key == 'joinpart':
-					ret = data._replace(text=_formatmctoirc(data.extra['obj'].message))
+					text = _formatmctoirc(data.extra['obj'].message)
+					if 'prefix' in data.target.extra and data.target.extra['prefix'] != None and data.target.extra['prefix'] != '':
+						text = data.target.extra['prefix'] + ' ' + text
+					ret = data._replace(text=text)
 				elif key == 'whitelist':
 					name = m.group(2)
 					ip = m.group(3)
