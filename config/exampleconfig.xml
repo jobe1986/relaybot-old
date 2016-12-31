@@ -11,6 +11,11 @@
 	<module name="minecraft" />
 
 	<!--
+		Example module providing an IRC fantasy command
+	-->
+	<!-- <module name="ircfantasy" /> -->
+
+	<!--
 		Logging config:
 		Specifies the logging output configuration.
 
@@ -40,6 +45,7 @@
 		<user nick="RelayBot" user="RelayBot" gecos="Simple Relay Bot" />
 		<channel name="#minecraft">
 			<relay type="minecraft" name="Minecraft" channel="" prefix="[IRC]" />
+			<relay type="ircfantasy" name="IRCFantasy" channel="" prefix="" />
 		</channel>
 	</irc>
 
@@ -80,4 +86,8 @@
 			</relay>
 		</udp>
 	</minecraft>
+
+	<ircfantasy name="IRCFantasy">
+		<relay type="irc" name="IRCNetwork" channel="#minecraft" prefix="[Fantasy]" />
+	</ircfantasy>
 </config>
