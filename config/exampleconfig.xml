@@ -31,8 +31,8 @@
 		then the level 'INFO' is assumed.
 	-->
 	<logging>
-		<output type="file" path="logs/relaybot.log" rollover="midnight" level="DEBUG"/>
 		<output type="stdout" level="DEBUG"/>
+		<output type="file" path="logs/relaybot.log" rollover="midnight" level="DEBUG"/>
 	</logging>
 
 	<irc name="IRCNetwork">

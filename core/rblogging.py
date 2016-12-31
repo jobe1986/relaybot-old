@@ -147,6 +147,9 @@ def runconfig():
 	global configs
 	global log
 	global levels
+	global defloghandler
+
+	i = 0
 
 	for outconf in configs['outputs']:
 		if outconf['type'] == 'stdout':
@@ -165,6 +168,10 @@ def runconfig():
 
 		loghandler.setLevel(levels[outconf['level']])
 		log.addHandler(loghandler)
+		i += 1
+
+	if i > 0:
+		log.removeHandler(defloghandler)
 
 for name in levels:
 	logging.addLevelName(levels[name], name)
@@ -172,3 +179,9 @@ for name in levels:
 logging.setLoggerClass(MyLogger)
 log = logging.getLogger('relaybot')
 log.setLevel(logging.DEBUG)
+
+defloghandler = logging.StreamHandler(sys.stderr)
+deflogformatter = UTCFormatter('[%(asctime)s] [%(modname)s/%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
+defloghandler.setFormatter(deflogformatter)
+defloghandler.setLevel('WARNING')
+log.addHandler(defloghandler)
