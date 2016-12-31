@@ -400,10 +400,10 @@ class client:
 			self._caps = {}
 			self._schedevs['cap'] = self._addtimer(delay=self._capdelay, callback=self._docapend)
 		self._iscap = True
-		if (msg['params'][1] == 'LS'):
+		if (msg['params'][1] == 'LS' or msg['params'][1] == 'NEW'):
 			reqcaps = []
 			capsls = msg['params'][-1].split(' ')
-			knowncaps = ['account-notify', 'away-notify', 'extended-join', 'multi-prefix', 'userhost-in-names']
+			knowncaps = ['account-notify', 'away-notify', 'extended-join', 'multi-prefix', 'userhost-in-names', 'cap-notify']
 			for cap in capsls:
 				if cap in knowncaps:
 					reqcaps.append(cap)
