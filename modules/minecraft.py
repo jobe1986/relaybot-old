@@ -704,7 +704,8 @@ class playerdeathfilter:
 			'^.+? hit the ground too hard$',
 			'^.+? fell out of the world$',
 			'^.+? was roasted in dragon breath$',
-			'^.+? experienced kinetic energy$']
+			'^.+? experienced kinetic energy$',
+			'^.+? went off with a bang$']
 	_deathregc = []
 
 	def filter(self, data):
