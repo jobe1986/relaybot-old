@@ -340,6 +340,7 @@ class client:
 					jsonbuf = buf
 					if m != None:
 						s = m.group(2).replace('\\"', '"')
+						s = s.replace('\\', '\\\\')
 						jsonbuf = m.group(1) + s.replace('"', '\\"') + m.group(3)
 					jsonobj = json.loads(jsonbuf)
 				except Exception as e:
