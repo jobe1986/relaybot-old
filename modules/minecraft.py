@@ -527,7 +527,14 @@ class client:
 					args = data.extra['args']
 				self._rconcommand(data.text, callback, args)
 			else:
-				self._rconcommand('tellraw @a ' + json.dumps([data.text]))
+				parts = []
+				for part in filter(None, re.split('(https?://[^\s]+)', data.text)):
+					if part[0:7] == 'http://' or part[0:8] == 'https://':
+						parts.append({'text':part, 'underlined':True, 'clickEvent':{'action':'open_url', 'value':part}})
+					else:
+						parts.append(part)
+				#parts = [data.text]
+				self._rconcommand('tellraw @a ' + json.dumps(parts))
 
 	def _rconexpirecalls(self):
 		delids = []
