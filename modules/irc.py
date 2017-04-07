@@ -468,6 +468,7 @@ class client:
 			log.log(LOG_ERROR, 'Unknown error looking up host name ' + self._server['server'], self)
 
 		if (len(addrs) < 1):
+			self._schedconnect()
 			return
 
 		s = None
