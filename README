@@ -1,0 +1,19 @@
+                       Welcome to RelayBot
+               A simple multi-protocol chat relay bot.
+
+DESCRIPTION:
+This program is designed as a simple in game chat relay service. It is
+currently capable of relaying IRC messages and Minecraft chat messages.
+
+REQUIREMENTS:
+Requires at the very least Python 2.6 (as far as I know)
+
+INSTALLATION:
+Installation is simple, once downloaded you need only copy
+conf/exampleconfig.xml to conf/config.xml, read the enclosed comments
+and configure as necesary. After completing conf/config.xml you will then be
+able to run the bot using 'python run.py'
+
+CONTACT/SUPPORT:
+If you need any help, support or just want to say thanks, feel free to drop
+by the IRC channel #minecraft on irc.afternet.org
