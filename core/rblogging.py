@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with RelayBot.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging, logging.handlers, sys, time, json
+import logging, logging.handlers, sys, time
 
 #logging.CRITICAL = 50
 #logging.ERROR = 40
