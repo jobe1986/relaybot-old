@@ -6,7 +6,7 @@ This program is designed as a simple in game chat relay service. It is
 currently capable of relaying IRC messages and Minecraft chat messages.
 
 REQUIREMENTS:
-Requires at the very least Python 2.6 (as far as I know)
+Requires at the very least Python 3.4
 
 INSTALLATION:
 Installation is simple, once downloaded you need only copy

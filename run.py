@@ -20,6 +20,8 @@
 # You should have received a copy of the GNU General Public License
 # along with RelayBot.  If not, see <http://www.gnu.org/licenses/>.
 
+from core.rblogging import *
+
 import asyncio
 
 loop = asyncio.get_event_loop()
@@ -27,6 +29,6 @@ loop = asyncio.get_event_loop()
 try:
 	loop.run_forever()
 except KeyboardInterrupt:
-	print('Stopping: Keyboard Interrupt')
+	log.info('Stopping: Keyboard interrupt')
 
 loop.close()
