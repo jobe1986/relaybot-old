@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with RelayBot.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging, logging.handlers, sys, time
+import logging, logging.handlers, sys, time, re
 
 #logging.CRITICAL = 50
 #logging.ERROR = 40
@@ -43,23 +43,43 @@ LOG_DEFAULT = LOG_DEBUG
 
 levels = {'DEBUG': LOG_DEBUG, 'PROTOCOL': LOG_PROTOCOL, 'INFO': LOG_INFO, 'WARNING': LOG_WARNING, 'ERROR': LOG_ERROR, 'CRITICAL': LOG_CRITICAL}
 
-class UTCFormatter(logging.Formatter):
-	converter = time.gmtime
+class AddModnameFilter(logging.Filter):
+	def __init__(self):
+		pass
 
-	def format(self, record):
+	def filter(self, record):
 		record.modname = record.name + '.' + record.module
 		if hasattr(record, 'obj'):
 			if hasattr(record.obj, 'name'):
 				record.modname = record.modname + '::' + record.obj.name
-		return super( UTCFormatter, self ).format(record)
+		return True
+
+class ModnameRegExFilter(logging.Filter):
+	def __init__(self, regex):
+		self._re = re.compile(regex)
+
+	def filter(self, record):
+		if hasattr(record, 'modname'):
+			m = self._re.match(record.modname)
+			if m != None:
+				return True
+		return False
+
+class UTCFormatter(logging.Formatter):
+	converter = time.gmtime
 
 class MyLogger(logging.Logger):
 	def _addextraobj(self, **kwargs):
 		if self.name != 'relaybot':
 			return kwargs
+		object = None
 		if 'object' in kwargs and kwargs['object'] != None:
 			object = kwargs['object']
 			del kwargs['object']
+		elif 'obj' in kwargs and kwargs['obj'] != None:
+			object = kwargs['obj']
+			del kwargs['obj']
+		if object != None:
 			if not 'extra' in kwargs:
 				kwargs['extra'] = {'obj': object}
 			else:
@@ -175,8 +195,8 @@ def runconfig(loop):
 		logformatter = UTCFormatter('[%(asctime)s] [%(modname)s/%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
 		loghandler.setFormatter(logformatter)
 		loghandler.setLevel(out['level'])
+		loghandler.addFilter(AddModnameFilter())
 		root.addHandler(loghandler)
-
 		i += 1
 
 	if i > 0:
@@ -195,6 +215,7 @@ defloghandler = logging.StreamHandler(sys.stderr)
 deflogformatter = UTCFormatter('[%(asctime)s] [%(modname)s/%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
 defloghandler.setFormatter(deflogformatter)
 defloghandler.setLevel(LOG_DEFAULT)
+defloghandler.addFilter(AddModnameFilter())
 root.addHandler(defloghandler)
 
 log = logging.getLogger('relaybot')
