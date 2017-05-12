@@ -1,7 +1,6 @@
-#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-# RelayBot - Simple Multi-protocol Relay Bot, run.py
+# RelayBot - Simple Multi-protocol Relay Bot, core/rbLOG_py
 #
 # Copyright (C) 2016 Matthew Beeching
 #
@@ -20,20 +19,30 @@
 # You should have received a copy of the GNU General Public License
 # along with RelayBot.  If not, see <http://www.gnu.org/licenses/>.
 
+from xml.etree.ElementTree import ElementTree
+
+import core.rblogging as rblogging
 from core.rblogging import *
-import core.rbconfig as _config
 
-import asyncio, sys
+import os
 
-loop = asyncio.get_event_loop()
+def load(loop, file='config/config.xml'):
+	try:
+		absfile = os.path.abspath(file)
+		tree = ElementTree()
+		doc = tree.parse(absfile)
 
-if not _config.load(loop):
-	log.critical('Unable to load configuration')
-	sys.exit()
+		log.info('Loading configuration from ' + absfile)
 
-try:
-	loop.run_forever()
-except KeyboardInterrupt:
-	log.info('Stopping: Keyboard interrupt')
+		log.debug('Loading logging config')
+		logcfg = doc.find('logging')
+		if rblogging.loadconfig(logcfg):
+			rblogging.runconfig(loop)
+		else:
+			log.error('Unable to load logging config')
+			return False
 
-loop.close()
+		log.info('Configuration successfully loaded')
+		return True
+	except Exception as e:
+		log.error('Error parsing config: ' + str(e))

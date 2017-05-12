@@ -37,6 +37,7 @@ LOG_WARNING = logging.WARNING
 LOG_INFO = logging.INFO
 LOG_PROTOCOL = 15
 LOG_DEBUG = logging.DEBUG
+LOG_NOTSET = logging.NOTSET
 
 LOG_DEFAULT = LOG_DEBUG
 
@@ -106,6 +107,81 @@ class MyLogger(logging.Logger):
 
 		if self.isEnabledFor(level):
 			self._log(level, msg, args, **kwargs)
+
+confs = {'outputs': []}
+
+def loadconfig(conf):
+	global confs, levels, log
+
+	outs = conf.findall('output')
+
+	for out in outs:
+		if not 'type' in out.attrib:
+			log.error('Missing type attribute in logging output')
+			continue
+		if not out.attrib['type'].lower() in ['file', 'stdout', 'stderr']:
+			log.error('Invalid type "' + out.attrib['type'] + '" in logging output')
+			continue
+
+		outconf = {'type': out.attrib['type'].lower(), 'path': None, 'rollover': None, 'level': LOG_INFO}
+
+		if 'level' in out.attrib:
+			if not out.attrib['level'].upper() in levels:
+				log.warning('Invalid level attribute value "' + out.attrib['level'] + '" in logging output, assuming INFO')
+				outconf['level'] = LOG_INFO
+			else:
+				outconf['level'] = levels[out.attrib['level'].upper()]
+
+		if outconf['type'] == 'file':
+			if not 'path' in out.attrib:
+				log.error('Missing path attribute in file logging output')
+				continue
+			outconf['path'] = out.attrib['path']
+
+			if 'rollover' in out.attrib:
+				if out.attrib['rollover'].lower() in ['midnight']:
+					outconf['rollover'] = out.attrib['rollover'].lower()
+				else:
+					try:
+						outconf['rollover'] = int(out.attrib['rollover'])
+					except:
+						log.warning('Invalid value for rollover in logging output, assuming no rollover')
+
+		log.debug('Found logging output: ' + str(outconf))
+		confs['outputs'].append(outconf)
+
+	return True
+
+def runconfig(loop):
+	global confs, log, root, defloghandler, deflogformatter
+
+	i = 0
+
+	for out in confs['outputs']:
+		if out['type'] == 'stdout':
+			loghandler = logging.StreamHandler(sys.stdout)
+		elif out['type'] == 'stderr':
+			loghandler = logging.StreamHandler(sys.stderr)
+		elif out['type'] == 'file':
+			if out['rollover'] == None:
+				loghandler = logging.FileHandler(out['path'])
+			elif out['rollover'] == 'midnight':
+				loghandler = logging.handlers.TimedRotatingFileHandler(out['path'], when='midnight', interval=1, backupCount=10, utc=True)
+			else:
+				loghandler = logging.handlers.RotatingFileHandler(out['path'], maxBytes=out['rollover'], backupCount=10)
+		else:
+			continue
+
+		logformatter = UTCFormatter('[%(asctime)s] [%(modname)s/%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
+		loghandler.setFormatter(logformatter)
+		loghandler.setLevel(out['level'])
+		root.addHandler(loghandler)
+
+		i += 1
+
+	if i > 0:
+		root.removeHandler(defloghandler)
+		log.debug('Found at least one valid logging output, no longer using default output')
 
 for name in levels:
 	logging.addLevelName(levels[name], name)
