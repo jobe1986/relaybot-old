@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# RelayBot - Simple Multi-protocol Relay Bot, core/rblogging.py
+# RelayBot - Simple Multi-protocol Relay Bot, core/rbLOG_py
 #
 # Copyright (C) 2016 Matthew Beeching
 #
@@ -31,12 +31,14 @@ import logging, logging.handlers, sys, time
 
 __all__ = ['log', 'LOG_CRITICAL', 'LOG_ERROR', 'LOG_WARNING', 'LOG_INFO', 'LOG_PROTOCOL', 'LOG_DEBUG']
 
-LOG_CRITICAL = 50
-LOG_ERROR = 40
-LOG_WARNING = 30
-LOG_INFO = 20
+LOG_CRITICAL = logging.CRITICAL
+LOG_ERROR = logging.ERROR
+LOG_WARNING = logging.WARNING
+LOG_INFO = logging.INFO
 LOG_PROTOCOL = 15
-LOG_DEBUG = 10
+LOG_DEBUG = logging.DEBUG
+
+LOG_DEFAULT = LOG_DEBUG
 
 levels = {'DEBUG': LOG_DEBUG, 'PROTOCOL': LOG_PROTOCOL, 'INFO': LOG_INFO, 'WARNING': LOG_WARNING, 'ERROR': LOG_ERROR, 'CRITICAL': LOG_CRITICAL}
 
@@ -64,24 +66,24 @@ class MyLogger(logging.Logger):
 		return kwargs
 
 	def critical(self, msg, *args, **kwargs):
-		if self.isEnabledFor(logging.CRITICAL):
+		if self.isEnabledFor(LOG_CRITICAL):
 			kwargs = self._addextraobj(**kwargs)
-			self._log(logging.CRITICAL, msg, args, **kwargs)
+			self._log(LOG_CRITICAL, msg, args, **kwargs)
 
 	def error(self, msg, *args, **kwargs):
-		if self.isEnabledFor(logging.ERROR):
+		if self.isEnabledFor(LOG_ERROR):
 			kwargs = self._addextraobj(**kwargs)
-			self._log(logging.ERROR, msg, args, **kwargs)
+			self._log(LOG_ERROR, msg, args, **kwargs)
 
 	def warning(self, msg, *args, **kwargs):
-		if self.isEnabledFor(logging.WARNING):
+		if self.isEnabledFor(LOG_WARNING):
 			kwargs = self._addextraobj(**kwargs)
-			self._log(logging.WARNING, msg, args, **kwargs)
+			self._log(LOG_WARNING, msg, args, **kwargs)
 
 	def info(self, msg, *args, **kwargs):
-		if self.isEnabledFor(logging.INFO):
+		if self.isEnabledFor(LOG_INFO):
 			kwargs = self._addextraobj(**kwargs)
-			self._log(logging.INFO, msg, args, **kwargs)
+			self._log(LOG_INFO, msg, args, **kwargs)
 
 	def protocol(self, msg, *args, **kwargs):
 		if self.isEnabledFor(LOG_PROTOCOL):
@@ -89,9 +91,9 @@ class MyLogger(logging.Logger):
 			self._log(LOG_PROTOCOL, msg, args, **kwargs)
 
 	def debug(self, msg, *args, **kwargs):
-		if self.isEnabledFor(logging.DEBUG):
+		if self.isEnabledFor(LOG_DEBUG):
 			kwargs = self._addextraobj(**kwargs)
-			self._log(logging.DEBUG, msg, args, **kwargs)
+			self._log(LOG_DEBUG, msg, args, **kwargs)
 
 	def log(self, level, msg, *args, **kwargs):
 		if not isinstance(level, int):
@@ -111,13 +113,13 @@ for name in levels:
 logging.setLoggerClass(MyLogger)
 
 root = logging.getLogger(None)
-root.setLevel(logging.DEBUG)
+root.setLevel(LOG_DEFAULT)
 
 defloghandler = logging.StreamHandler(sys.stderr)
 deflogformatter = UTCFormatter('[%(asctime)s] [%(modname)s/%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
 defloghandler.setFormatter(deflogformatter)
-defloghandler.setLevel('INFO')
+defloghandler.setLevel(LOG_DEFAULT)
 root.addHandler(defloghandler)
 
 log = logging.getLogger('relaybot')
-log.setLevel(logging.DEBUG)
+log.setLevel(LOG_DEFAULT)
