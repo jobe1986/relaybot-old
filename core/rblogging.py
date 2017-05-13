@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with RelayBot.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging, logging.handlers, sys, time, re
+import logging, logging.handlers, sys, time, re, os
 
 #logging.CRITICAL = 50
 #logging.ERROR = 40
@@ -43,6 +43,8 @@ LOG_DEFAULT = LOG_DEBUG
 
 levels = {'DEBUG': LOG_DEBUG, 'PROTOCOL': LOG_PROTOCOL, 'INFO': LOG_INFO, 'WARNING': LOG_WARNING, 'ERROR': LOG_ERROR, 'CRITICAL': LOG_CRITICAL}
 
+cwd = os.getcwd()
+
 def leveltoname(level):
 	global levels
 	for lvl in levels:
@@ -54,7 +56,19 @@ class AddModnameFilter(logging.Filter):
 	def __init__(self):
 		pass
 
+	def setmod(self, record):
+		global cwd
+		if record.name == 'relaybot':
+			modpath = os.path.relpath(record.pathname, cwd)
+			parts = os.path.split(os.path.splitext(modpath)[0])
+			if parts[0] != 'core' and parts[0] != '':
+				mod = '.'.join(parts)
+				if mod[0] == '.':
+					mod = mod[1:]
+				record.module = mod
+
 	def filter(self, record):
+		self.setmod(record)
 		record.modname = record.name + '.' + record.module
 		if hasattr(record, 'obj'):
 			if hasattr(record.obj, 'name'):
