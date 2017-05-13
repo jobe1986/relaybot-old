@@ -28,7 +28,7 @@ mods = {}
 def load(name):
 	global mods
 
-	if 'name' in mods:
+	if name in mods:
 		log.log(LOG_WARN, 'Unable to load module ' + name + ': already loaded')
 		return False
 	try:
