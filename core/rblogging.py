@@ -43,6 +43,13 @@ LOG_DEFAULT = LOG_DEBUG
 
 levels = {'DEBUG': LOG_DEBUG, 'PROTOCOL': LOG_PROTOCOL, 'INFO': LOG_INFO, 'WARNING': LOG_WARNING, 'ERROR': LOG_ERROR, 'CRITICAL': LOG_CRITICAL}
 
+def leveltoname(level):
+	global levels
+	for lvl in levels:
+		if levels[lvl] == level:
+			return lvl
+	return 'NOTSET'
+
 class AddModnameFilter(logging.Filter):
 	def __init__(self):
 		pass
@@ -167,7 +174,9 @@ def loadconfig(conf):
 					except:
 						log.warning('Invalid value for rollover in logging output, assuming no rollover')
 
-		log.debug('Found logging output: ' + str(outconf))
+		oc2 = outconf.copy()
+		oc2['level'] = leveltoname(oc2['level'])
+		log.debug('Found logging output: ' + str(oc2))
 		confs['outputs'].append(outconf)
 
 	return True
