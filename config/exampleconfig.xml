@@ -2,6 +2,20 @@
 <!-- Copy to config.xml and then edit -->
 <config>
 	<!--
+		Modules config:
+		Loads the named modules.
+
+		Currently only the irc and minecraft modules exist
+	-->
+	<module name="irc" />
+	<module name="minecraft" />
+
+	<!--
+		Example module providing an IRC fantasy command
+	-->
+	<!-- <module name="ircfantasy" /> -->
+
+	<!--
 		Logging config:
 		Specifies the logging output configuration.
 

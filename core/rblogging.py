@@ -108,6 +108,8 @@ class MyLogger(logging.Logger):
 			kwargs = self._addextraobj(**kwargs)
 			self._log(LOG_WARNING, msg, args, **kwargs)
 
+	warn = warning
+
 	def info(self, msg, *args, **kwargs):
 		if self.isEnabledFor(LOG_INFO):
 			kwargs = self._addextraobj(**kwargs)
@@ -181,7 +183,7 @@ def loadconfig(conf):
 
 	return True
 
-def runconfig(loop):
+def applyconfig(loop):
 	global confs, log, root, defloghandler, deflogformatter
 
 	i = 0

@@ -22,6 +22,7 @@
 from xml.etree.ElementTree import ElementTree
 
 import core.rblogging as rblogging
+import core.rbmodules as rbmodules
 from core.rblogging import *
 
 import os
@@ -37,9 +38,16 @@ def load(loop, file='config/config.xml'):
 		log.debug('Loading logging config')
 		logcfg = doc.find('logging')
 		if rblogging.loadconfig(logcfg):
-			rblogging.runconfig(loop)
+			rblogging.applyconfig(loop)
 		else:
 			log.error('Unable to load logging config')
+			return False
+
+		log.debug('Loading modules')
+		if rbmodules.loadconfig(doc):
+			rbmodules.applyconfig(loop)
+		else:
+			log.error('Unable to load modules')
 			return False
 
 		log.info('Configuration successfully loaded')
