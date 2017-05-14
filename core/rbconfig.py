@@ -21,15 +21,15 @@
 
 from xml.etree.ElementTree import ElementTree
 
-import core.rblogging as rblogging
-import core.rbmodules as rbmodules
+import core.rblogging as _logging
+import core.rbmodules as _modules
 from core.rblogging import *
 
 import os
 
-def load(loop, file='config/config.xml'):
+def load(loop, args):
 	try:
-		absfile = os.path.abspath(file)
+		absfile = os.path.abspath(args.config)
 		tree = ElementTree()
 		doc = tree.parse(absfile)
 
@@ -37,15 +37,15 @@ def load(loop, file='config/config.xml'):
 
 		log.debug('Loading logging config')
 		logcfg = doc.find('logging')
-		if rblogging.loadconfig(logcfg):
-			rblogging.applyconfig(loop)
+		if _logging.loadconfig(logcfg):
+			_logging.applyconfig(loop)
 		else:
 			log.error('Unable to load logging config')
 			return False
 
 		log.debug('Loading modules')
-		if rbmodules.loadconfig(doc):
-			rbmodules.applyconfig(loop)
+		if _modules.loadconfig(doc):
+			_modules.applyconfig(loop)
 		else:
 			log.error('Unable to load modules')
 			return False

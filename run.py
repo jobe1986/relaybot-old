@@ -21,13 +21,24 @@
 # along with RelayBot.  If not, see <http://www.gnu.org/licenses/>.
 
 from core.rblogging import *
+import core.rblogging as _logging
 import core.rbconfig as _config
 
-import asyncio, sys
+import asyncio, sys, argparse
+
+def parse_args():
+	parser = argparse.ArgumentParser()
+	parser.add_argument('-d', '--debug', help='Enable debug output to STDOUT', action='store_true', dest='debug')
+	parser.add_argument('-c', '--config', help='Specify the path to config.xml', action='store', default='config/config.xml', dest='config')
+	return parser.parse_args()
+
+args = parse_args()
+
+_logging.init_logging(args)
 
 loop = asyncio.get_event_loop()
 
-if not _config.load(loop):
+if not _config.load(loop, args):
 	log.critical('Unable to load configuration')
 	sys.exit()
 

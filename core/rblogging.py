@@ -39,11 +39,13 @@ LOG_PROTOCOL = 15
 LOG_DEBUG = logging.DEBUG
 LOG_NOTSET = logging.NOTSET
 
-LOG_DEFAULT = LOG_DEBUG
-
 levels = {'DEBUG': LOG_DEBUG, 'PROTOCOL': LOG_PROTOCOL, 'INFO': LOG_INFO, 'WARNING': LOG_WARNING, 'ERROR': LOG_ERROR, 'CRITICAL': LOG_CRITICAL}
 
 cwd = os.getcwd()
+
+root = logging.getLogger(None)
+log = logging.getLogger('relaybot')
+args = None
 
 def leveltoname(level):
 	global levels
@@ -198,12 +200,14 @@ def loadconfig(conf):
 	return True
 
 def applyconfig(loop):
-	global confs, log, root, defloghandler, deflogformatter
+	global confs, log, root, defloghandler, deflogformatter, cliargs
 
-	i = 0
+	removedef = False
 
 	for out in confs['outputs']:
 		if out['type'] == 'stdout':
+			if cliargs.debug:
+				continue
 			loghandler = logging.StreamHandler(sys.stdout)
 		elif out['type'] == 'stderr':
 			loghandler = logging.StreamHandler(sys.stderr)
@@ -222,26 +226,32 @@ def applyconfig(loop):
 		loghandler.setLevel(out['level'])
 		loghandler.addFilter(AddModnameFilter())
 		root.addHandler(loghandler)
-		i += 1
+		if not cliargs.debug:
+			removedef = True
 
-	if i > 0:
+	if removedef:
 		root.removeHandler(defloghandler)
 		log.debug('Found at least one valid logging output, no longer using default output')
 
-for name in levels:
-	logging.addLevelName(levels[name], name)
+def init_logging(args):
+	global log, levels, root, defloghandler, deflogformatter, cliargs
+	cliargs = args
 
-logging.setLoggerClass(MyLogger)
+	for name in levels:
+		logging.addLevelName(levels[name], name)
 
-root = logging.getLogger(None)
-root.setLevel(LOG_DEFAULT)
+	logging.setLoggerClass(MyLogger)
 
-defloghandler = logging.StreamHandler(sys.stderr)
-deflogformatter = UTCFormatter('[%(asctime)s] [%(modname)s/%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
-defloghandler.setFormatter(deflogformatter)
-defloghandler.setLevel(LOG_DEFAULT)
-defloghandler.addFilter(AddModnameFilter())
-root.addHandler(defloghandler)
+	defloghandler = logging.StreamHandler(sys.stderr)
+	deflogformatter = UTCFormatter('[%(asctime)s] [%(modname)s/%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
+	defloghandler.setFormatter(deflogformatter)
+	defloghandler.addFilter(AddModnameFilter())
 
-log = logging.getLogger('relaybot')
-log.setLevel(LOG_DEFAULT)
+	if args.debug:
+		defloghandler.setLevel(LOG_DEBUG)
+	else:
+		defloghandler.setLevel(LOG_INFO)
+
+	root.setLevel(LOG_DEBUG)
+	log.setLevel(LOG_DEBUG)
+	root.addHandler(defloghandler)
