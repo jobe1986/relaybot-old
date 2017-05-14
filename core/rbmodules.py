@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# RelayBot - Simple Multi-protocol Relay Bot, core/modules.py
+# RelayBot - Simple Multi-protocol Relay Bot, core/rbmodules.py
 #
 # Copyright (C) 2016 Matthew Beeching
 #
@@ -35,13 +35,14 @@ def loadmod(name):
 		return False
 
 	try:
-		m = importlib.import_module(name)
+		m = importlib.import_module('modules.' + name)
 		importlib.invalidate_caches()
 	except Exception as e:
 		log.error('Error loading module ' + name + ': ' + str(e))
 		return False
 
 	mods[name] = m
+	log.debug('Loaded module ' + name)
 	return m
 
 def loadconfig(config):
