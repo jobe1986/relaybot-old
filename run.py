@@ -28,8 +28,8 @@ import asyncio, sys, argparse
 
 def parse_args():
 	parser = argparse.ArgumentParser()
-	parser.add_argument('-d', '--debug', help='Enable debug output to STDOUT', action='store_true', dest='debug')
 	parser.add_argument('-c', '--config', help='Specify the path to config.xml', action='store', default='config/config.xml', dest='config')
+	parser.add_argument('-d', '--debug', help='Enable debug output to STDOUT', action='store_true', dest='debug')
 	return parser.parse_args()
 
 args = parse_args()
