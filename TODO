@@ -1,3 +1,4 @@
 Todo list:
 
 - everything
+- Allow more then one <server /> block in <irc /> to allow cycling through servers until one succeeds
