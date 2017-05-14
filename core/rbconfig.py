@@ -27,16 +27,16 @@ from core.rblogging import *
 
 import os
 
-def load(loop, args):
-	try:
-		absfile = os.path.abspath(args.config)
-		tree = ElementTree()
-		doc = tree.parse(absfile)
+config = None
+configpath = 'config/config.xml'
 
-		log.info('Loading configuration from ' + absfile)
+def load(loop, args):
+	global config, configpath
+	try:
+		log.info('Loading configuration from ' + configpath)
 
 		log.debug('Loading logging config')
-		logcfg = doc.find('logging')
+		logcfg = config.find('logging')
 		if _logging.loadconfig(logcfg):
 			_logging.applyconfig(loop)
 		else:
@@ -44,7 +44,7 @@ def load(loop, args):
 			return False
 
 		log.debug('Loading modules')
-		if _modules.loadconfig(doc):
+		if _modules.loadconfig(config):
 			_modules.applyconfig(loop)
 		else:
 			log.error('Unable to load modules')
@@ -54,3 +54,17 @@ def load(loop, args):
 		return True
 	except Exception as e:
 		log.error('Error parsing config: ' + str(e))
+
+def checkdebug(args):
+	global config, configpath
+	try:
+		configpath = os.path.abspath(args.config)
+		tree = ElementTree()
+		config = tree.parse(configpath)
+
+		dbgconf = config.findall('debug')
+		if len(dbgconf) > 0:
+			args.debug = True
+	except Exception as e:
+		log.error('Error checking config for debug mode: ' + str(e))
+		

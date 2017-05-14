@@ -39,4 +39,9 @@
 		<output type="stdout" level="DEBUG"/>
 		<output type="file" path="logs/relaybot.log" rollover="midnight" level="DEBUG"/>
 	</logging>
+
+	<!--
+		Enable debug mode (alternative to using ./run -d)
+	-->
+	<!-- <debug /> -->
 </config>
