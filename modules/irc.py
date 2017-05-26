@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with RelayBot.  If not, see <http://www.gnu.org/licenses/>.
 
-import socket, sched, time, sys
+import socket, sched, time, sys, ssl
 
 from core.rblogging import *
 import core.rbsocket as rbsocket
@@ -168,7 +168,15 @@ class client:
 		self._schedpri = schedpri
 		self._schedevs = {'cap': None, 'conn': None, 'ping': None, 'perform': None, 'nick': None}
 		self._myid = {'nick': nick, 'user': user, 'gecos': gecos, 'curnick': nick, 'curnicknum': -1}
-		self._server = {'server': server, 'curserver': server, 'port': port, 'password': serverpassword}
+		p = port
+		s = False
+		if isinstance(p, basestring):
+			if p[0] == '+':
+				s = True
+				p = int(p[1:])
+			else:
+				p = int(p)
+		self._server = {'server': server, 'curserver': server, 'port': p, 'password': serverpassword, 'ssl': s}
 		self._msgbinds = {}
 		self._ircbuf = ''
 		self._performdone = False
@@ -491,6 +499,9 @@ class client:
 			log.log(LOG_ERROR, 'Error connecting to ' + self._server['server'], self)
 			self._schedconnect()
 			return
+
+		if self._server['ssl']:
+			s = ssl.wrap_socket(s)
 
 		self._connected = True
 		self._sock = s

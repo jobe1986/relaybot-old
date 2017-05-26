@@ -41,6 +41,7 @@
 	</logging>
 
 	<irc name="IRCNetwork">
+		<!-- 'port' can be prefixed with a '+' to enable SSL -->
 		<server host="irc.server.tld" port="6667" password="" />
 		<user nick="RelayBot" user="RelayBot" gecos="Simple Relay Bot" />
 		<channel name="#minecraft">
