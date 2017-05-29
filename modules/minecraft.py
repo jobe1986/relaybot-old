@@ -47,10 +47,10 @@ def loadconfig(doc):
 
 	for cli in cliconfs:
 		if not 'name' in cli.attrib:
-			log.log(LOG_ERROR, 'Minrcraft client config missing name attribute')
+			log.error('Minrcraft client config missing name attribute')
 			raise Exception('Minecraft client config missing name attribute')
 		if cli.attrib['name'] in configs:
-			log.log(LOG_ERROR, 'Duplicate Minecraft config name')
+			log.error('Duplicate Minecraft config name')
 			raise Exception('Duplicate Minecraft config name')
 
 		name = cli.attrib['name']
@@ -58,35 +58,35 @@ def loadconfig(doc):
 
 		rcon = cli.find('./rcon')
 		if not 'host' in rcon.attrib:
-			log.log(LOG_ERROR, 'Minrcraft client rcon config missing host attribute')
+			log.error('Minrcraft client rcon config missing host attribute')
 			raise Exception('Minrcraft client rcon config missing host attribute')
 		if not 'port' in rcon.attrib:
-			log.log(LOG_ERROR, 'Minrcraft client rcon config missing port attribute')
+			log.error('Minrcraft client rcon config missing port attribute')
 			raise Exception('Minrcraft client rcon config missing port attribute')
 		if not 'password' in rcon.attrib:
-			log.log(LOG_ERROR, 'Minrcraft client rcon config missing password attribute')
+			log.error('Minrcraft client rcon config missing password attribute')
 			raise Exception('Minrcraft client rcon config missing password attribute')
 		configs[name]['rcon'] = rcon.attrib
 
 		udp = cli.find('./udp')
 		if not 'port' in udp.attrib:
-			log.log(LOG_ERROR, 'Minrcraft client udp config missing port attribute')
+			log.error('Minrcraft client udp config missing port attribute')
 			raise Exception('Minrcraft client udp config missing port attribute')
 		configs[name]['udp'] = udp.attrib
 
 		rels = rcon.findall('./relay')
 		for rel in rels:
 			if not 'type' in rel.attrib:
-				log.log(LOG_ERROR, 'Minecraft rcon relay missing type attribute')
+				log.error('Minecraft rcon relay missing type attribute')
 				raise Exception('Minecraft rcon relay missing type attribute')
 			if not 'name' in rel.attrib:
-				log.log(LOG_ERROR, 'Minecraft rcon relay missing name attribute')
+				log.error('Minecraft rcon relay missing name attribute')
 				raise Exception('Minecraft rcon relay missing name attribute')
 			if not 'channel' in rel.attrib:
-				log.log(LOG_ERROR, 'Minecraft rcon relay missing channel attribute')
+				log.error('Minecraft rcon relay missing channel attribute')
 				raise Exception('Minecraft rcon relay missing channel attribute')
 			if rel.attrib['type'] == 'minecraft' and rel.attrib['name'] == name:
-				log.log(LOG_INFO, 'Ignoring attempt to relay Minecraft to itself')
+				log.info('Ignoring attempt to relay Minecraft to itself')
 				continue
 			relnew = rel.attrib
 			relnew['filters'] = []
@@ -105,16 +105,16 @@ def loadconfig(doc):
 		rels = udp.findall('./relay')
 		for rel in rels:
 			if not 'type' in rel.attrib:
-				log.log(LOG_ERROR, 'Minecraft udp relay missing type attribute')
+				log.error('Minecraft udp relay missing type attribute')
 				raise Exception('Minecraft udp relay missing type attribute')
 			if not 'name' in rel.attrib:
-				log.log(LOG_ERROR, 'Minecraft udp relay missing name attribute')
+				log.error('Minecraft udp relay missing name attribute')
 				raise Exception('Minecraft udp relay missing name attribute')
 			if not 'channel' in rel.attrib:
-				log.log(LOG_ERROR, 'Minecraft udp relay missing channel attribute')
+				log.error('Minecraft udp relay missing channel attribute')
 				raise Exception('Minecraft udp relay missing channel attribute')
 			if rel.attrib['type'] == 'minecraft' and rel.attrib['name'] == name:
-				log.log(LOG_INFO, 'Ignoring attempt to relay Minecraft to itself')
+				log.info('Ignoring attempt to relay Minecraft to itself')
 				continue
 			relnew = rel.attrib
 			relnew['filters'] = []
@@ -133,16 +133,16 @@ def loadconfig(doc):
 		rels = cli.findall('./relay')
 		for rel in rels:
 			if not 'type' in rel.attrib:
-				log.log(LOG_ERROR, 'Minecraft channel relay missing type attribute')
+				log.error('Minecraft channel relay missing type attribute')
 				raise Exception('Minecraft channel relay missing type attribute')
 			if not 'name' in rel.attrib:
-				log.log(LOG_ERROR, 'Minecraft channel relay missing name attribute')
+				log.error('Minecraft channel relay missing name attribute')
 				raise Exception('Minecraft channel relay missing name attribute')
 			if not 'channel' in rel.attrib:
-				log.log(LOG_ERROR, 'Minecraft channel relay missing channel attribute')
+				log.error('Minecraft channel relay missing channel attribute')
 				raise Exception('Minecraft channel relay missing channel attribute')
 			if rel.attrib['type'] == 'minecraft' and rel.attrib['name'] == name:
-				log.log(LOG_INFO, 'Ignoring attempt to relay Minecraft to itself')
+				log.info('Ignoring attempt to relay Minecraft to itself')
 				continue
 			relnew = rel.attrib
 			relnew['filters'] = []
@@ -330,7 +330,7 @@ class client:
 				buf = ''
 				src = ('0.0.0.0', 0)
 			if buf != '':
-				log.log(LOG_PROTOCOL, 'UDP:[' + src[0] + ']:' + str(src[1]) + ' <-- ' + buf, self)
+				log.protocol('UDP:[' + src[0] + ']:' + str(src[1]) + ' <-- ' + buf, self)
 				if buf[0] == ',':
 					buf = buf[1:]
 				try:
@@ -349,7 +349,7 @@ class client:
 					udpobj = MCUDPLogPacket(jsonobj['timestamp'], jsonobj['logger'], jsonobj['message'], jsonobj['thread'], jsonobj['level'])
 					self._handleudp(udpobj)
 				except Exception as e:
-					log.log(LOG_ERROR, 'UDP Error handling UDP log packet: ' + str(e), self)
+					log.error('UDP Error handling UDP log packet: ' + str(e), self)
 		if sock == self._rconsock:
 			try:
 				buf = self._rconsock.recv(4096)
@@ -357,13 +357,13 @@ class client:
 				buf = ''
 
 			if (buf == ''):
-				log.log(LOG_INFO, 'RCON Received no data from ' + self._rcon['host'] + ', attemoting to reconnect', self)
+				log.info('RCON Received no data from ' + self._rcon['host'] + ', attemoting to reconnect', self)
 				self.disconnect('', False)
 				self._schedconnect()
 				return
 
 			if buf != '':
-				log.log(LOG_DEBUG, 'RCON <-- ' + binascii.hexlify(buf), self)
+				log.debug('RCON <-- ' + binascii.hexlify(buf), self)
 
 				self._rconbuf = self._rconbuf + buf
 
@@ -377,11 +377,11 @@ class client:
 					if len(self._rconbuf) < size + 4:
 						break
 
-					log.log(LOG_DEBUG, 'RCON Parsing packet: ' + binascii.hexlify(self._rconbuf[:size + 4]), self)
+					log.debug('RCON Parsing packet: ' + binascii.hexlify(self._rconbuf[:size + 4]), self)
 					packet = self._rconbuf[4:size + 4]
 					self._rconbuf = self._rconbuf[size + 4:]
 					if self._rconbuf != '':
-						log.log(LOG_DEBUG, 'RCON Remaining packet: ' + binascii.hexlify(self._rconbuf), self)
+						log.debug('RCON Remaining packet: ' + binascii.hexlify(self._rconbuf), self)
 
 					if size == 10:
 						payload = ''
@@ -389,26 +389,26 @@ class client:
 					elif size > 10:
 						(idin, type, payload, padding) = unpack('<ii' + str(size-10) + 's2s', packet)
 					else:
-						log.log(LOG_DEBUG, 'RCON Packet with erroneous length (' + str(size) + '): ' + binascii.hexlify(packet), self)
+						log.debug('RCON Packet with erroneous length (' + str(size) + '): ' + binascii.hexlify(packet), self)
 						continue
 
-					log.log(LOG_PROTOCOL, 'RCON <-- id:' + str(idin) + ', type:' + str(type) + ', payload:' + payload, self)
+					log.protocol('RCON <-- id:' + str(idin) + ', type:' + str(type) + ', payload:' + payload, self)
 
 					if self._rconidbuf['id'] != idin:
 						if self._rconidbuf['id'] != -1:
-							log.log(LOG_DEBUG, 'RCON Unparsed packet being dropped with id ' + self._rconidbuf['id'], self)
+							log.debug('RCON Unparsed packet being dropped with id ' + self._rconidbuf['id'], self)
 						self._rconidbuf = {'id': idin, 'buf': ''}
 					self._rconidbuf['buf'] = self._rconidbuf['buf'] + payload
 
 					if size != 4106:
 						rcon = MCRConPacket(idin, type, self._rconidbuf['buf'])
-						log.log(LOG_DEBUG, 'RCON Handling packet: ' + str(rcon), self)
+						log.debug('RCON Handling packet: ' + str(rcon), self)
 						self._rconidbuf = {'id': -1, 'buf': ''}
 
 						try:
 							self._rconhandle(rcon)
 						except Exception as e:
-							log.log(LOG_ERROR, 'RCON Error handling RCON packet: ' + str(e), self)
+							log.error('RCON Error handling RCON packet: ' + str(e), self)
 
 	def _doerr(self, sock):
 		return
@@ -449,7 +449,7 @@ class client:
 		if self._schedevs['conn'] != None:
 			return
 		self._schedevs['conn'] = self._addtimer(delay=freq, callback=self.connect)
-		log.log(LOG_INFO, 'RCON Attempting to reconnect in ' + str(freq) + ' seconds', self)
+		log.info('RCON Attempting to reconnect in ' + str(freq) + ' seconds', self)
 
 	def _rconsend(self, id=0, type=0, payload=None):
 		if self._rconsock == None:
@@ -464,36 +464,36 @@ class client:
 
 		packet = pack('<i', len(packet)) + packet
 
-		log.log(LOG_DEBUG, 'RCON --> ' + binascii.hexlify(packet), self)
-		log.log(LOG_PROTOCOL, 'RCON --> id:' + str(id) + ', type:' + str(type) + ', payload:' + payload, self)
+		log.debug('RCON --> ' + binascii.hexlify(packet), self)
+		log.protocol('RCON --> id:' + str(id) + ', type:' + str(type) + ', payload:' + payload, self)
 
 		try:
 			self._rconsock.send(packet)
 		except Exception as e:
-			log.log(LOG_ERROR, 'RCON Error sending to RCON: ' + str(e), self)
+			log.error('RCON Error sending to RCON: ' + str(e), self)
 			self.disconnect('', False)
 			self._schedconnect()
 
 	def _rconhandle(self, rcon):
 		if rcon.id == -1 and rcon.type == 2:
 			self.disconnect()
-			log.log(LOG_ERROR, 'RCON Unable to login to RCON, will not attempt to reconnect', self)
+			log.error('RCON Unable to login to RCON, will not attempt to reconnect', self)
 		elif rcon.type == 2:
 			self._rconconnected = True
 			self._deltimer(self._schedevs['login'])
 			self._schedevs['login'] = None
-			log.log(LOG_INFO, 'RCON Sucessfully logged in to RCON', self)
+			log.info('RCON Sucessfully logged in to RCON', self)
 			self._callrelay(None, rcon, what='rcon', schannel='rcon')
 		elif rcon.type == 0:
 			if rcon.id in self._rconcalls:
-				log.log(LOG_DEBUG, 'RCON Handling callback for RCON response', self)
+				log.debug('RCON Handling callback for RCON response', self)
 				if self._rconcalls[rcon.id].callback != None:
 					self._rconcalls[rcon.id].callback(rcon, self._rconcalls[rcon.id])
 				del self._rconcalls[rcon.id]
 
 	def _rcontimeout(self):
 		if self._rconconnected:
-			log.log(LOG_ERROR, 'RCON Timed out logging in to RCON, attempting to reconnect', self)
+			log.error('RCON Timed out logging in to RCON, attempting to reconnect', self)
 		self.disconnect()
 		self._schedconnect()
 
@@ -510,7 +510,7 @@ class client:
 				if m.group(2) != '':
 					self._callrelay(m.group(2), rcon, rconcall.args[0].type, rconcall.args[0].name, rconcall.args[0].channel, what='rcon', schannel='rcon')
 		except Exception as e:
-			log.log(LOG_ERROR, 'RCON Error handling RCON players list response: ' + str(e), self)
+			log.error('RCON Error handling RCON players list response: ' + str(e), self)
 
 	def _relaycallback(self, data):
 		if self._rconconnected:
@@ -540,7 +540,7 @@ class client:
 		delids = []
 		for id in self._rconcalls:
 			if self._rconcalls[id].time + self._rconexpiretimeout > time.time():
-				log.log(LOG_DEBUG, 'RCON Expiring RCON callback: ' + str(self._rconcalls[id]), self)
+				log.debug('RCON Expiring RCON callback: ' + str(self._rconcalls[id]), self)
 				delids.append(id)
 		for id in delids:
 			del self._rconcalls[id]
@@ -565,7 +565,7 @@ class client:
 		self._schedevs['conn'] = None
 
 		if reconudp or self._udpsock == None:
-			log.log(LOG_INFO, 'UDP Attempting to bind to port ' + str(self._udp['port']) + ' on host ' + self._udp['host'], self)
+			log.info('UDP Attempting to bind to port ' + str(self._udp['port']) + ' on host ' + self._udp['host'], self)
 
 			if self._udpsock != None:
 				self._udpsock.close()
@@ -574,7 +574,7 @@ class client:
 			try:
 				addrs = socket.getaddrinfo(self._udp['host'], self._udp['port'], 0, 0, socket.IPPROTO_UDP)
 			except Exception as e:
-				log.log(LOG_ERROR, 'UDP Error binding UDP socket: ' + str(e), self)
+				log.error('UDP Error binding UDP socket: ' + str(e), self)
 
 			if len(addrs) < 1:
 				return
@@ -583,26 +583,26 @@ class client:
 			try:
 				s = rbsocket.rbsocket(af, socktype, proto)
 			except Exception as e:
-				log.log(LOG_ERROR, 'UDP Error creating UDP socket: ' + str(e), self)
+				log.error('UDP Error creating UDP socket: ' + str(e), self)
 				return
 
 			try:
 				s.bind(sa)
 			except Exception as e:
-				log.log(LOG_ERROR, 'UDP Error binding UDP socket: ' + str(e), self)
+				log.error('UDP Error binding UDP socket: ' + str(e), self)
 				return
 
 			self._udpsock = s
 
-			log.log(LOG_INFO, 'UDP Bound to port ' + str(self._udp['port']) + ' on host ' + self._udp['host'], self)
+			log.info('UDP Bound to port ' + str(self._udp['port']) + ' on host ' + self._udp['host'], self)
 
-		log.log(LOG_INFO, 'RCON Attempting to connect to ' + self._rcon['host'] + ' on port ' + str(self._rcon['port']), self)
+		log.info('RCON Attempting to connect to ' + self._rcon['host'] + ' on port ' + str(self._rcon['port']), self)
 
 		addrs = []
 		try:
 			addrs = socket.getaddrinfo(self._rcon['host'], self._rcon['port'], 0, 0, socket.IPPROTO_TCP)
 		except Exception as e:
-			log.log(LOG_ERROR, 'RCON Error connecting rcon socket: ' + str(e), self)
+			log.error('RCON Error connecting rcon socket: ' + str(e), self)
 
 		if len(addrs) < 1:
 			return
@@ -627,7 +627,7 @@ class client:
 			break
 
 		if s == None:
-			log.log(LOG_ERROR, 'RCON Error connecting to rcon: ' + str(ex[-1]), self)
+			log.error('RCON Error connecting to rcon: ' + str(ex[-1]), self)
 			self._schedconnect()
 			return
 
@@ -641,7 +641,7 @@ class client:
 
 		self._addsock()
 
-		log.log(LOG_INFO, 'RCON Connected to rcon socket, waiting for logon confirmation', self)
+		log.info('RCON Connected to rcon socket, waiting for logon confirmation', self)
 
 	def disconnect(self, reason = '', sendexit = True, closeudp = False):
 		self._delsock(closeudp)
@@ -663,7 +663,7 @@ class client:
 			self._relays[what] = [rel]
 		else:
 			self._relays[what].append(rel)
-		log.log(LOG_DEBUG, 'Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix=' + prefix + ')', self)
+		log.debug('Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix=' + prefix + ')', self)
 
 class playerdeathfilter:
 	_deathreg = ['^.+? fell off a ladder$',

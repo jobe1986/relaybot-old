@@ -35,10 +35,10 @@ def loadconfig(doc):
 
 	for irccli in cliconfs:
 		if not 'name' in irccli.attrib:
-			log.log(LOG_ERROR, 'IRC client config missing name attribute')
+			log.error('IRC client config missing name attribute')
 			raise Exception('IRC client config missing name attribute')
 		if irccli.attrib['name'] in configs:
-			log.log(LOG_ERROR, 'Duplicate IRC client config name')
+			log.error('Duplicate IRC client config name')
 			raise Exception('Duplicate IRC client config name')
 
 		name = irccli.attrib['name']
@@ -46,19 +46,19 @@ def loadconfig(doc):
 
 		servs = irccli.findall('./server')
 		if len(servs) > 1:
-			log.log(LOG_ERROR, 'Too many IRC client server elements')
+			log.error('Too many IRC client server elements')
 			raise Exception('Too many IRC client server elements')
 		if len(servs) < 1:
-			log.log(LOG_ERROR, 'Missing IRC client server element')
+			log.error('Missing IRC client server element')
 			raise Exception('Missing IRC client server element')
 
 		serv = servs[0]
 
 		if not 'host' in serv.attrib:
-			log.log(LOG_ERROR, 'IRC client server missing host attribute')
+			log.error('IRC client server missing host attribute')
 			raise Exception('IRC client server missing host attribute')
 		if not 'port' in serv.attrib:
-			log.log(LOG_ERROR, 'IRC client server missing port attribute')
+			log.error('IRC client server missing port attribute')
 			raise Exception('IRC client server missing port attribute')
 
 		configs[name]['server'] = serv.attrib
@@ -70,23 +70,23 @@ def loadconfig(doc):
 
 		usrs = irccli.findall('./user')
 		if len(usrs) > 1:
-			log.log(LOG_ERROR, 'Too many IRC client user elements')
+			log.error('Too many IRC client user elements')
 			raise Exception('Too many IRC client user elements')
 		if len(usrs) < 1:
-			log.log(LOG_ERROR, 'Missing IRC client user elements')
+			log.error('Missing IRC client user elements')
 			raise Exception('Missing IRC client user elements')
 		usr = usrs[0]
 
 		configs[name]['user'] = usr.attrib
 
 		if not 'nick' in usr.attrib:
-			log.log(LOG_ERROR, 'IRC client user missing nick attribute')
+			log.error('IRC client user missing nick attribute')
 			raise Exception('IRC client user missing nick attribute')
 		if not 'user' in usr.attrib:
-			log.log(LOG_ERROR, 'IRC client user missing user attribute')
+			log.error('IRC client user missing user attribute')
 			raise Exception('IRC client user missing user attribute')
 		if not 'gecos' in usr.attrib:
-			log.log(LOG_ERROR, 'IRC client user missing gecos attribute')
+			log.error('IRC client user missing gecos attribute')
 			raise Exception('IRC client user missing gecos attribute')
 
 		chans = irccli.findall('./channel')
@@ -101,16 +101,16 @@ def loadconfig(doc):
 			rels = chan.findall('./relay')
 			for rel in rels:
 				if not 'type' in rel.attrib:
-					log.log(LOG_ERROR, 'IRC channel relay missing type attribute')
+					log.error('IRC channel relay missing type attribute')
 					raise Exception('IRC channel relay missing type attribute')
 				if not 'name' in rel.attrib:
-					log.log(LOG_ERROR, 'IRC channel relay missing name attribute')
+					log.error('IRC channel relay missing name attribute')
 					raise Exception('IRC channel relay missing name attribute')
 				if not 'channel' in rel.attrib:
 					raise Exception('IRC channel relay missing channel attribute')
 					raise Exception('IRC channel relay missing channel attribute')
 				if rel.attrib['type'] == 'irc' and rel.attrib['name'] == name and rel.attrib['channel'].lower() == cname.lower():
-					log.log(LOG_INFO, 'Ignoring attempt to relay IRC channel to itself')
+					log.info('Ignoring attempt to relay IRC channel to itself')
 					continue
 				if not cname.lower() in configs[name]['relays']:
 					configs[name]['relays'][cname.lower()] = []
@@ -253,7 +253,7 @@ class client:
 
 	def _doping(self):
 		if not self._pingrcvd:
-			log.log(LOG_INFO, 'Ping Timeout', self)
+			log.info('Ping Timeout', self)
 			self.disconnect('', False)
 			self._schedconnect()
 			return
@@ -275,12 +275,12 @@ class client:
 		if self._schedevs['conn'] != None:
 			return
 		self._schedevs['conn'] = self._addtimer(delay=freq, callback=self.connect)
-		log.log(LOG_INFO, 'Attempting to reconnect in ' + str(freq) + ' seconds', self)
+		log.info('Attempting to reconnect in ' + str(freq) + ' seconds', self)
 
 	def _doline(self, line):
 		if ((line == None) or (line == '')):
 			return
-		log.log(LOG_PROTOCOL, '<-- ' + line, self)
+		log.protocol('<-- ' + line, self)
 		msg = self._parse_raw(line)
 		self._execmsg(msg)
 
@@ -396,7 +396,7 @@ class client:
 			self._myid['curnick'] = msg['params'][0]
 			if self._myid['curnick'].lower() == self._myid['nick'].lower():
 				self._myid['curnicknum'] = -1
-			log.log(LOG_INFO, 'Current nick changed to: ' + self._myid['curnick'], self)
+			log.info('Current nick changed to: ' + self._myid['curnick'], self)
 			if self._schedevs['nick'] != None:
 				self._deltimer(self._schedevs['nick'])
 				self._schedevs['nick'] = None
@@ -425,7 +425,7 @@ class client:
 					self._caps[cap] = True
 
 	def _m_error(self, msg):
-		log.log(LOG_INFO, 'Disconnected from ' + self._server['server'] + ', attemoting to reconnect', self)
+		log.info('Disconnected from ' + self._server['server'] + ', attemoting to reconnect', self)
 		self.disconnect('', False)
 		self._schedconnect(self._nexterrconnfreq)
 		self._nexterrconnfreq = self._nexterrconnfreq + self._errconnfreq
@@ -464,16 +464,16 @@ class client:
 			self._deltimer(self._schedevs['cap'])
 		self._schedevs['cap'] = None
 		self._schedevs['perform'] = None
-		log.log(LOG_INFO, 'Attempting to connect to ' + self._server['server'] + ' on port ' + str(self._server['port']), self)
+		log.info('Attempting to connect to ' + self._server['server'] + ' on port ' + str(self._server['port']), self)
 
 		addrs = []
 
 		try:
 			addrs = socket.getaddrinfo(self._server['server'], self._server['port'], 0, 0, socket.IPPROTO_TCP)
 		except socket.gaierror as e:
-			log.log(LOG_ERROR, 'Error connecting to ' + self._server['server'] + ': ' + e.strerror, self)
+			log.error('Error connecting to ' + self._server['server'] + ': ' + e.strerror, self)
 		except:
-			log.log(LOG_ERROR, 'Unknown error looking up host name ' + self._server['server'], self)
+			log.error('Unknown error looking up host name ' + self._server['server'], self)
 
 		if (len(addrs) < 1):
 			self._schedconnect()
@@ -496,19 +496,24 @@ class client:
 			break
 
 		if s == None:
-			log.log(LOG_ERROR, 'Error connecting to ' + self._server['server'], self)
+			log.error('Error connecting to ' + self._server['server'], self)
 			self._schedconnect()
 			return
 
 		if self._server['ssl']:
-			s = ssl.wrap_socket(s)
+			try:
+				s = ssl.wrap_socket(s)
+			except Exception as e:
+				log.error('Error connectng ssl to ' + self._server['server'] + ': ' + str(e), self)
+				self._schedconnect()
+				return
 
 		self._connected = True
 		self._sock = s
 		self._addsock()
 		self._myid['curnick'] = self._myid['nick']
 
-		log.log(LOG_INFO, 'Connected to ' + self._server['server'] + ' on port ' + str(self._server['port']), self)
+		log.info('Connected to ' + self._server['server'] + ' on port ' + str(self._server['port']), self)
 
 		self._startping()
 
@@ -559,11 +564,11 @@ class client:
 		except Exception as e:
 			sent = 0
 		if (sent == 0):
-			log.log(LOG_INFO, 'Disconnected from ' + self._server['server'] + ', attemoting to reconnect', self)
+			log.info('Disconnected from ' + self._server['server'] + ', attemoting to reconnect', self)
 			self.disconnect('', False)
 			self._schedconnect()
 			return
-		log.log(LOG_PROTOCOL, '--> ' + line, self)
+		log.protocol('--> ' + line, self)
 
 	def channel_add(self, channel):
 		if channel == None or channel == '':
@@ -580,7 +585,7 @@ class client:
 				self._relays[relchan.lower()].append(rel)
 		else:
 			self._relays[relchan.lower()] = [rel]
-		log.log(LOG_DEBUG, 'Added relay rule for channel ' + relchan + ' (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix:' + prefix + ')', self)
+		log.debug('Added relay rule for channel ' + relchan + ' (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix:' + prefix + ')', self)
 
 	def doread(self, sock):
 		if self._sock != sock:
@@ -592,7 +597,7 @@ class client:
 			buf = ''
 
 		if (buf == ''):
-			log.log(LOG_INFO, 'Received no data from ' + self._server['server'] + ', attemoting to reconnect', self)
+			log.info('Received no data from ' + self._server['server'] + ', attemoting to reconnect', self)
 			self.disconnect('', False)
 			self._schedconnect()
 			return
@@ -612,7 +617,7 @@ class client:
 		return
 
 	def doerr(self, sock):
-		log.log(LOG_INFO, 'Exceptional condition from ' + self._server['server'] + ', attemoting to reconnect', self)
+		log.info('Exceptional condition from ' + self._server['server'] + ', attemoting to reconnect', self)
 		self.disconnect('', False)
 		self._schedconnect()
 		return

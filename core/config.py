@@ -35,9 +35,9 @@ def loadconfig(timers, file = 'config/config.xml'):
 
 		modules.loadconfig(doc)
 	except Exception as e:
-		rblogging.log.log(rblogging.LOG_ERROR, "Error parsing config: " + str(e))
+		rblogging.log.error("Error parsing config: " + str(e))
 
 	try:
 		modules.runconfig(timers)
 	except Exception as e:
-		rblogging.log.log(rblogging.LOG_ERROR, "Error loading config: " + str(e))
+		rblogging.log.error("Error loading config: " + str(e))

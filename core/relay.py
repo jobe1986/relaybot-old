@@ -42,7 +42,7 @@ def bind(type, name, callback):
 	targ = RelayBinding(type, name, callback)
 	if not targ in relaybindings:
 		relaybindings.append(targ)
-		log.log(LOG_DEBUG, 'Bound relay (type:' + type + ', name:' + name + ')')
+		log.debug('Bound relay (type:' + type + ', name:' + name + ')')
 		return targ
 
 def unbind(type, name, callback):
@@ -55,19 +55,19 @@ def unbind(type, name, callback):
 		if bind.callback != callback:
 			continue
 		relaybindings.remove(bind)
-		log.log(LOG_DEBUG, 'Unbound relay (type:' + type + ', name:' + name + ')')
+		log.debug('Unbound relay (type:' + type + ', name:' + name + ')')
 		break
 
 def call(text, target, source, extra):
 	global relaybindings
 	data = RelayData(text, source, target, extra)
-	log.log(LOG_DEBUG, 'Attempting to call relays (type:' + target.type + ', name:' + target.name + ', channel:' + target.channel + ')')
+	log.debug('Attempting to call relays (type:' + target.type + ', name:' + target.name + ', channel:' + target.channel + ')')
 	if target.filters != None and len(target.filters) > 0:
 		matched = False
 		for filt in target.filters:
 			try:
 				if not hasattr(filt, 'filter'):
-					log.log(LOG_ERROR, 'Filter without filter() method: ' + str(filt))
+					log.error('Filter without filter() method: ' + str(filt))
 					continue
 				res, datares = filt.filter(data)
 				if res == FILTER_BLOCK:
@@ -77,12 +77,12 @@ def call(text, target, source, extra):
 						matched = True
 						data = datares
 			except Exception as e:
-				log.log(LOG_ERROR, 'Error testing filter ' + str(filt) + ' for relay data: ' + str(e))
+				log.error('Error testing filter ' + str(filt) + ' for relay data: ' + str(e))
 				return
 		if not matched:
 			return
 	for bind in relaybindings:
 		if bind.type == target.type and bind.name == target.name:
 			if bind.callback != None:
-				log.log(LOG_DEBUG, 'Calling relay (type:' + bind.type + ', name:' + bind.name + ')')
+				log.debug('Calling relay (type:' + bind.type + ', name:' + bind.name + ')')
 				bind.callback(data)

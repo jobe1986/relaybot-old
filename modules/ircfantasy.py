@@ -34,10 +34,10 @@ def loadconfig(doc):
 
 	for cli in cliconfs:
 		if not 'name' in cli.attrib:
-			log.log(LOG_ERROR, 'IRC Fantasy client config missing name attribute')
+			log.error('IRC Fantasy client config missing name attribute')
 			raise Exception('IRC Fantasy client config missing name attribute')
 		if cli.attrib['name'] in configs:
-			log.log(LOG_ERROR, 'Duplicate IRC Fantasy config name')
+			log.error('Duplicate IRC Fantasy config name')
 			raise Exception('Duplicate IRC Fantasy config name')
 
 		name = cli.attrib['name']
@@ -46,16 +46,16 @@ def loadconfig(doc):
 		relconfs = cli.findall('./relay')
 		for rel in relconfs:
 			if not 'type' in rel.attrib:
-				log.log(LOG_ERROR, 'IRC Fantasy relay missing type attribute')
+				log.error('IRC Fantasy relay missing type attribute')
 				raise Exception('IRC Fantasy relay missing type attribute')
 			if not 'name' in rel.attrib:
-				log.log(LOG_ERROR, 'IRC Fantasy relay missing name attribute')
+				log.error('IRC Fantasy relay missing name attribute')
 				raise Exception('IRC Fantasy relay missing name attribute')
 			if not 'channel' in rel.attrib:
-				log.log(LOG_ERROR, 'IRC Fantasy relay missing channel attribute')
+				log.error('IRC Fantasy relay missing channel attribute')
 				raise Exception('IRC Fantasy relay missing channel attribute')
 			if rel.attrib['type'] == 'IRCfantasy' and rel.attrib['name'] == name:
-				log.log(LOG_INFO, 'Ignoring attempt to relay IRC to itself')
+				log.info('Ignoring attempt to relay IRC to itself')
 				continue
 			relnew = rel.attrib
 			conf['relays'].append(relnew)
@@ -111,4 +111,4 @@ class client():
 	def relay_add(self, type, name, channel):
 		rel = relay.RelayTarget(type, name, channel, {}, None)
 		self._relays.append(rel)
-		log.log(LOG_DEBUG, 'Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ')', self)
+		log.debug('Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ')', self)

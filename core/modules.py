@@ -29,14 +29,14 @@ def load(name):
 	global mods
 
 	if name in mods:
-		log.log(LOG_WARN, 'Unable to load module ' + name + ': already loaded')
+		log.warn('Unable to load module ' + name + ': already loaded')
 		return False
 	try:
 		m = __import__('modules.' + name)
 		if hasattr(m, name):
 			m = getattr(m, name)
 	except Exception as e:
-		log.log(LOG_ERROR, 'Error loading module ' + name + ': ' + str(e))
+		log.error('Error loading module ' + name + ': ' + str(e))
 		m = None
 
 	if m != None:
@@ -63,7 +63,7 @@ def loadconfig(doc):
 
 	for mod in modconfs:
 		if not 'name' in mod.attrib:
-			log.log(LOG_ERROR, 'Module config missing module name')
+			log.error('Module config missing module name')
 			raise Exception('Module config missing module name')
 		if not mod.attrib['name'] in mods:
 			if not load(mod.attrib['name']):

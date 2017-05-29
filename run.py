@@ -36,10 +36,10 @@ def doselect(timeout):
 	except KeyboardInterrupt as e:
 		for sock in sockets:
 			rbsocket.dodisconnect(sock, 'Shutting down (Ctrl+C)')
-		log.log(LOG_INFO, 'Received keyboard interrupt, shutting down.')
+		log.info('Received keyboard interrupt, shutting down.')
 		exit()
 	except Exception as e:
-		log.log(LOG_CRITICAL, str(e))
+		log.critical(str(e))
 		exit()
 	for sock in selerr:
 		rbsocket.doerr(sock)
@@ -64,9 +64,9 @@ except KeyboardInterrupt as e:
 	sockets = modules.getsockets()
 	for sock in sockets:
 		rbsocket.dodisconnect(sock, 'Shutting down (Ctrl+C)')
-	log.log(LOG_INFO, 'Received keyboard interrupt, shutting down.')
+	log.info('Received keyboard interrupt, shutting down.')
 except Exception as e:
 	sockets = modules.getsockets()
 	for sock in sockets:
 		rbsocket.dodisconnect(sock, 'Exception: ' + str(e))
-	log.log(LOG_CRITICAL, str(e))
+	log.critical(str(e))
