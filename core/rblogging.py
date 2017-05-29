@@ -79,6 +79,11 @@ class MyLogger(logging.Logger):
 			kwargs = self._addextraobj(object, **kwargs)
 			self._log(logging.INFO, msg, args, **kwargs)
 
+	def protocol(self, msg, object=None, *args, **kwargs):
+		if self.isEnabledFor(LOG_PROTOCOL):
+			kwargs = self._addextraobj(object, **kwargs)
+			self._log(LOG_PROTOCOL, msg, args, **kwargs)
+
 	def debug(self, msg, object=None, *args, **kwargs):
 		if self.isEnabledFor(logging.DEBUG):
 			kwargs = self._addextraobj(object, **kwargs)
