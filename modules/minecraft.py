@@ -346,7 +346,7 @@ class client:
 				except Exception as e:
 					return
 				try:
-					udpobj = MCUDPLogPacket(jsonobj['timestamp'], jsonobj['logger'], jsonobj['message'], jsonobj['thread'], jsonobj['level'])
+					udpobj = MCUDPLogPacket(jsonobj['timeMillis'], jsonobj['loggerName'], jsonobj['message'], jsonobj['thread'], jsonobj['level'])
 					self._handleudp(udpobj)
 				except Exception as e:
 					log.error('UDP Error handling UDP log packet: ' + str(e), self)
@@ -795,7 +795,8 @@ class playerchatfilter:
 			'net.minecraft.server.MinecraftServer': {
 				'chatmsg': '^([\\[<])([^ ]+?)([\\]>]) (.*)$',
 				'chatact': '^\\* ([^ ]+) (.*)$',
-				'achievment': '^([^\s]+?) has (lost|just earned) the achievement \[.*?\]$'
+				'achievment': '^([^\s]+?) has (lost|just earned) the achievement \[.*?\]$',
+				'advancement': '^([^\s]+?) has made the advancement \[.*?\]'
 				},
 			}
 	_regc = {
