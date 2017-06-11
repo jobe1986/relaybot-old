@@ -78,6 +78,20 @@
 			Then you must make sure to use the command line flag
 			"-Dlog4j.configurationFile=/path/to/log4j2.xml" every time you run your minecraft
 			server. (Don't forget to change the path to log4j2.xml)
+
+			MINECRAFT 1.12 AND LATER ONLY:
+			As of Mincreaft 1.12 due to a change in the log4j2 library included with minecraft
+			you will additionally need to download jackson-core-2.8.8.jar, jackson-databind-2.8.8.1.jar
+			and jackson-annotations-2.8.8.jar from http://search.maven.org into the same directory
+			as your minecraft_server.jar file. You will then need to change the command you use
+			to start minecraft by replacing -jar minecraft_server.jar with:
+			-cp "minecraft_server.jar:jackson-core-2.8.8.jar:jackson-databind-2.8.8.1.jar:jackson-annotations-2.8.8.jar"
+
+			If your minecraft_server.jar is called minecraft_server.1.12.jar then make sure to
+			replace minecraft_server.jar with minecraft_server.1.12.jar in the above example.
+
+			If you are running your minecraft server on windows you will also need to replace
+			ther : in the above example with ; as well.
 		-->
 		<udp host="127.0.0.1" port="25585">
 			<relay type="irc" name="IRCNetwork" channel="#minecraft" prefix="[Minecraft]">
