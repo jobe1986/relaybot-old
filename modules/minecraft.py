@@ -796,8 +796,9 @@ class playerchatfilter:
 				'chatmsg': '^([\\[<])([^ ]+?)([\\]>]) (.*)$',
 				'chatact': '^\\* ([^ ]+) (.*)$',
 				'achievment': '^([^\s]+?) has (lost|just earned) the achievement \[.*?\]$',
-				'advancement': '^([^\s]+?) has made the advancement \[.*?\]',
-				'challenge': '^([^\s]+?) has completed the challenge \[.*?\]'
+				'advancement': '^([^\s]+?) has made the advancement \[.*?\]$',
+				'challenge': '^([^\s]+?) has completed the challenge \[.*?\]$',
+				'goal': '^([^\s]+?) has reached the goal \[.*?\]$'
 				},
 			}
 	_regc = {
