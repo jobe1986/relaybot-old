@@ -45,6 +45,7 @@ cwd = os.getcwd()
 
 root = logging.getLogger(None)
 log = logging.getLogger('relaybot')
+mylog = log.getChild(__name__)
 args = None
 
 def leveltoname(level):
@@ -58,23 +59,11 @@ class AddModnameFilter(logging.Filter):
 	def __init__(self):
 		pass
 
-	def setmod(self, record):
-		global cwd
-		if record.name == 'relaybot':
-			modpath = os.path.relpath(record.pathname, cwd)
-			parts = os.path.split(os.path.splitext(modpath)[0])
-			if parts[0] != 'core' and parts[0] != '':
-				mod = '.'.join(parts)
-				if mod[0] == '.':
-					mod = mod[1:]
-				record.module = mod
-
 	def filter(self, record):
-		self.setmod(record)
-		record.modname = record.name + '.' + record.module
+		record.modname = record.name
 		if hasattr(record, 'obj'):
 			if hasattr(record.obj, 'name'):
-				record.modname = record.modname + '::' + record.obj.name
+				record.modname = record.name + '::' + record.obj.name
 		return True
 
 class ModnameRegExFilter(logging.Filter):
@@ -156,30 +145,30 @@ class MyLogger(logging.Logger):
 confs = {'outputs': []}
 
 def loadconfig(conf):
-	global confs, levels, log
+	global confs, levels
 
 	outs = conf.findall('output')
 
 	for out in outs:
 		if not 'type' in out.attrib:
-			log.error('Missing type attribute in logging output')
+			mylog.error('Missing type attribute in logging output')
 			continue
 		if not out.attrib['type'].lower() in ['file', 'stdout', 'stderr']:
-			log.error('Invalid type "' + out.attrib['type'] + '" in logging output')
+			mylog.error('Invalid type "' + out.attrib['type'] + '" in logging output')
 			continue
 
 		outconf = {'type': out.attrib['type'].lower(), 'path': None, 'rollover': None, 'level': LOG_INFO}
 
 		if 'level' in out.attrib:
 			if not out.attrib['level'].upper() in levels:
-				log.warning('Invalid level attribute value "' + out.attrib['level'] + '" in logging output, assuming INFO')
+				mylog.warning('Invalid level attribute value "' + out.attrib['level'] + '" in logging output, assuming INFO')
 				outconf['level'] = LOG_INFO
 			else:
 				outconf['level'] = levels[out.attrib['level'].upper()]
 
 		if outconf['type'] == 'file':
 			if not 'path' in out.attrib:
-				log.error('Missing path attribute in file logging output')
+				mylog.error('Missing path attribute in file logging output')
 				continue
 			outconf['path'] = out.attrib['path']
 
@@ -190,17 +179,17 @@ def loadconfig(conf):
 					try:
 						outconf['rollover'] = int(out.attrib['rollover'])
 					except:
-						log.warning('Invalid value for rollover in logging output, assuming no rollover')
+						mylog.warning('Invalid value for rollover in logging output, assuming no rollover')
 
 		oc2 = outconf.copy()
 		oc2['level'] = leveltoname(oc2['level'])
-		log.debug('Found logging output: ' + str(oc2))
+		mylog.debug('Found logging output: ' + str(oc2))
 		confs['outputs'].append(outconf)
 
 	return True
 
 def applyconfig(loop):
-	global confs, log, root, defloghandler, deflogformatter, cliargs
+	global confs, root, defloghandler, deflogformatter, cliargs
 
 	removedef = False
 
@@ -231,10 +220,10 @@ def applyconfig(loop):
 
 	if removedef:
 		root.removeHandler(defloghandler)
-		log.debug('Found at least one valid logging output, no longer using default output')
+		mylog.debug('Found at least one valid logging output, no longer using default output')
 
 def init_logging(args):
-	global log, levels, root, defloghandler, deflogformatter, cliargs
+	global rblog, levels, root, defloghandler, deflogformatter, cliargs
 	cliargs = args
 
 	for name in levels:

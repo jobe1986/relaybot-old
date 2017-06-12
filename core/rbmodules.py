@@ -21,9 +21,10 @@
 
 from collections import namedtuple
 
-from core.rblogging import *
-
+import core.rblogging as _logging
 import importlib
+
+log = _logging.log.getChild(__name__)
 
 mods = {}
 

@@ -20,11 +20,12 @@
 # You should have received a copy of the GNU General Public License
 # along with RelayBot.  If not, see <http://www.gnu.org/licenses/>.
 
-from core.rblogging import *
 import core.rblogging as _logging
 import core.rbconfig as _config
 
 import asyncio, sys, argparse
+
+log = _logging.log.getChild('main')
 
 def parse_args():
 	parser = argparse.ArgumentParser()
@@ -40,13 +41,13 @@ _logging.init_logging(args)
 
 loop = asyncio.get_event_loop()
 
-if not _config.load(loop, args):
-	log.critical('Unable to load configuration')
-	sys.exit()
+loop.call_soon(_config.load, loop, args)
+
+log.info('Starting loop')
 
 try:
 	loop.run_forever()
 except KeyboardInterrupt:
-	log.info('Stopping: Keyboard interrupt')
+	log.info('Stopping loop: Keyboard interrupt')
 
 loop.close()
