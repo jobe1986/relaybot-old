@@ -47,6 +47,8 @@ def loadmod(name):
 	return m
 
 def loadconfig(config):
+	global mods
+
 	modcfgs = config.findall('module')
 
 	for mod in modcfgs:
@@ -56,6 +58,9 @@ def loadconfig(config):
 		name = mod.attrib['name']
 
 		m = loadmod(name)
+
+	for name in mods:
+		m = mods[name]
 		if m != None:
 			if hasattr(m, 'loadconfig'):
 				cfg = config.findall(name)

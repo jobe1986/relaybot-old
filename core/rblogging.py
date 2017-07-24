@@ -25,21 +25,19 @@ import logging, logging.handlers, sys, time, re, os
 #logging.ERROR = 40
 #logging.WARNING = 30
 #logging.INFO = 20
-#LOG_PROTOCOL = 15
 #logging.DEBUG = 10
 #logging.NOTSET = 0
 
-__all__ = ['log', 'LOG_CRITICAL', 'LOG_ERROR', 'LOG_WARNING', 'LOG_INFO', 'LOG_PROTOCOL', 'LOG_DEBUG']
+__all__ = ['log', 'LOG_CRITICAL', 'LOG_ERROR', 'LOG_WARNING', 'LOG_INFO', 'LOG_DEBUG']
 
 LOG_CRITICAL = logging.CRITICAL
 LOG_ERROR = logging.ERROR
 LOG_WARNING = logging.WARNING
 LOG_INFO = logging.INFO
-LOG_PROTOCOL = 15
 LOG_DEBUG = logging.DEBUG
 LOG_NOTSET = logging.NOTSET
 
-levels = {'DEBUG': LOG_DEBUG, 'PROTOCOL': LOG_PROTOCOL, 'INFO': LOG_INFO, 'WARNING': LOG_WARNING, 'ERROR': LOG_ERROR, 'CRITICAL': LOG_CRITICAL}
+levels = {'DEBUG': LOG_DEBUG, 'INFO': LOG_INFO, 'WARNING': LOG_WARNING, 'ERROR': LOG_ERROR, 'CRITICAL': LOG_CRITICAL}
 
 cwd = os.getcwd()
 
@@ -156,3 +154,6 @@ def init_logging(args):
 	root.setLevel(LOG_DEBUG)
 	log.setLevel(LOG_DEBUG)
 	root.addHandler(defloghandler)
+
+	if args.debug:
+		log.debug('Debug logging enabled')
