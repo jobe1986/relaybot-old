@@ -23,7 +23,7 @@
 import core.rblogging as _logging
 import core.rbconfig as _config
 
-import asyncio, sys, argparse
+import asyncio, sys, argparse, signal
 
 log = _logging.log.getChild('main')
 
@@ -33,14 +33,20 @@ def parse_args():
 	parser.add_argument('-d', '--debug', help='Enable debug output to STDOUT', action='store_true', dest='debug')
 	return parser.parse_args()
 
+def handle_sigint():
+	log.info('Stopping loop: Received signal SIGINT')
+	loop.stop()
+
 args = parse_args()
 
 _config.checkdebug(args)
-
 _logging.init_logging(args)
 
+# Create event loop and set signal handlers
 loop = asyncio.get_event_loop()
+loop.add_signal_handler(signal.SIGINT, handle_sigint)
 
+# Begin by loading config when we start the loop
 loop.call_soon(_config.load, loop, args)
 
 log.info('Starting loop')
