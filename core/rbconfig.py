@@ -31,6 +31,11 @@ log = _logging.log.getChild(__name__)
 config = None
 configpath = 'config/config.xml'
 
+TYPE_STRING = 'string'
+TYPE_INT = 'int'
+TYPE_BOOL = 'bool'
+TYPE_FLOAT = 'float'
+
 def load(loop, args):
 	global config, configpath
 	try:
@@ -73,49 +78,48 @@ def checkdebug(args):
 	except Exception as e:
 		log.error('Error checking configuration for debug mode: ' + str(e))
 		
-def getattrs(node, log, required=[], defaults={}, types={}):
+def getattrs(node, log, attrs={}):
 	ret = {}
 
 	for key in node.attrib:
 		val = node.attrib[key]
+		type = TYPE_STRING
+		err = None
 
-		if key in types:
-			t = types[key]
-			err = None
-			if t == 'int':
-				try:
+		if key in attrs:
+			if 'type' in attrs[key]:
+				type = attrs[key]['type']
+			try:
+				if type == TYPE_INT:
 					val = int(val)
-				except Exception as e:
-					err = str(e)
-			elif t == 'float':
-				try:
+				elif type == TYPE_FLOAT:
 					val = float(val)
-				except Exception as e:
-					err = str(e)
-			elif t == 'bool':
-				if val.lower() in ['false', 'no', '0']:
-					val = False
+				elif type == TYPE_BOOL:
+					if val.lower() in ['false', 'no', '0']:
+						val = False
+					else:
+						val = True
+			except Exception as e:
+				if 'def' in attrs[key]:
+					log.warning('Error converting attribute ' + key + ' to type ' + type + ', using default value instead')
+					val = attrs[key]['def']
 				else:
-					val = True
-
-			if not err is None:
-				if key in defaults:
-					log.warning('Error converting attribute ' + key + ' to type ' + t + ', using default value instead')
-					val = defaults[key]
-				else:
-					log.error('Error converting attribute ' + key + ' to type ' + t + ': ' + err)
+					log.error('Error converting attribute ' + key + ' to type ' + type + ': ' + str(e))
 					continue
 
 		ret[key] = val
-		if key in required:
-			required.remove(key)
 
-	if len(required) > 0:
-		log.error('Missing attribute(s) for ' + node.tag + ' configuration: ' + ', '.join(required))
-		return None
-
-	for key in defaults:
+	req = []
+	for key in attrs:
 		if not key in ret:
-			ret[key] = defaults[key]
+			if 'def' in attrs[key]:
+				ret[key] = attrs[key]['def']
+			elif 'reqd' in attrs[key]:
+				if attrs[key]['reqd']:
+					req.append(key)
+
+	if len(req) > 0:
+		log.error('Missing attribute(s) for ' + node.tag + ' configuration: ' + ', '.join(req))
+		return None
 
 	return ret

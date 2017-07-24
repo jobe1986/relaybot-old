@@ -55,92 +55,8 @@ def leveltoname(level):
 			return lvl
 	return 'NOTSET'
 
-class AddModnameFilter(logging.Filter):
-	def __init__(self):
-		pass
-
-	def filter(self, record):
-		record.modname = record.name
-		if hasattr(record, 'obj'):
-			if hasattr(record.obj, 'name'):
-				record.modname = record.name + '::' + record.obj.name
-		return True
-
-class ModnameRegExFilter(logging.Filter):
-	def __init__(self, regex):
-		self._re = re.compile(regex)
-
-	def filter(self, record):
-		if hasattr(record, 'modname'):
-			m = self._re.match(record.modname)
-			if m != None:
-				return True
-		return False
-
 class UTCFormatter(logging.Formatter):
 	converter = time.gmtime
-
-class MyLogger(logging.Logger):
-	def _addextraobj(self, **kwargs):
-		if self.name != 'relaybot':
-			return kwargs
-		object = None
-		if 'object' in kwargs and kwargs['object'] != None:
-			object = kwargs['object']
-			del kwargs['object']
-		elif 'obj' in kwargs and kwargs['obj'] != None:
-			object = kwargs['obj']
-			del kwargs['obj']
-		if object != None:
-			if not 'extra' in kwargs:
-				kwargs['extra'] = {'obj': object}
-			else:
-				kwargs['extra']['obj'] = object
-		return kwargs
-
-	def critical(self, msg, *args, **kwargs):
-		if self.isEnabledFor(LOG_CRITICAL):
-			kwargs = self._addextraobj(**kwargs)
-			self._log(LOG_CRITICAL, msg, args, **kwargs)
-
-	def error(self, msg, *args, **kwargs):
-		if self.isEnabledFor(LOG_ERROR):
-			kwargs = self._addextraobj(**kwargs)
-			self._log(LOG_ERROR, msg, args, **kwargs)
-
-	def warning(self, msg, *args, **kwargs):
-		if self.isEnabledFor(LOG_WARNING):
-			kwargs = self._addextraobj(**kwargs)
-			self._log(LOG_WARNING, msg, args, **kwargs)
-
-	warn = warning
-
-	def info(self, msg, *args, **kwargs):
-		if self.isEnabledFor(LOG_INFO):
-			kwargs = self._addextraobj(**kwargs)
-			self._log(LOG_INFO, msg, args, **kwargs)
-
-	def protocol(self, msg, *args, **kwargs):
-		if self.isEnabledFor(LOG_PROTOCOL):
-			kwargs = self._addextraobj(**kwargs)
-			self._log(LOG_PROTOCOL, msg, args, **kwargs)
-
-	def debug(self, msg, *args, **kwargs):
-		if self.isEnabledFor(LOG_DEBUG):
-			kwargs = self._addextraobj(**kwargs)
-			self._log(LOG_DEBUG, msg, args, **kwargs)
-
-	def log(self, level, msg, *args, **kwargs):
-		if not isinstance(level, int):
-			if raiseExceptions:
-				raise TypeError("level must be an integer")
-			else:
-				return
-
-		kwargs = self._addextraobj(**kwargs)
-
-		if self.isEnabledFor(level):
-			self._log(level, msg, args, **kwargs)
 
 confs = {'outputs': []}
 
@@ -210,10 +126,9 @@ def applyconfig(loop):
 		else:
 			continue
 
-		logformatter = UTCFormatter('[%(asctime)s] [%(modname)s/%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
+		logformatter = UTCFormatter('[%(asctime)s] [%(name)s/%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
 		loghandler.setFormatter(logformatter)
 		loghandler.setLevel(out['level'])
-		loghandler.addFilter(AddModnameFilter())
 		root.addHandler(loghandler)
 		if not cliargs.debug:
 			removedef = True
@@ -229,12 +144,9 @@ def init_logging(args):
 	for name in levels:
 		logging.addLevelName(levels[name], name)
 
-	logging.setLoggerClass(MyLogger)
-
 	defloghandler = logging.StreamHandler(sys.stderr)
-	deflogformatter = UTCFormatter('[%(asctime)s] [%(modname)s/%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
+	deflogformatter = UTCFormatter('[%(asctime)s] [%(name)s/%(levelname)s] %(message)s', '%Y-%m-%d %H:%M:%S')
 	defloghandler.setFormatter(deflogformatter)
-	defloghandler.addFilter(AddModnameFilter())
 
 	if args.debug:
 		defloghandler.setLevel(LOG_DEBUG)
