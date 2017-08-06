@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# RelayBot - Simple Multi-protocol Relay Bot, core/rbmodules.py
+# RelayBot - Simple Multi-protocol Relay Bot, core/modules.py
 #
 # Copyright (C) 2016 Matthew Beeching
 #
@@ -21,7 +21,7 @@
 
 from collections import namedtuple
 
-import core.rblogging as _logging
+import core.logging as _logging
 import importlib
 
 log = _logging.log.getChild(__name__)

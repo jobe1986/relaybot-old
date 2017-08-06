@@ -20,8 +20,8 @@
 # You should have received a copy of the GNU General Public License
 # along with RelayBot.  If not, see <http://www.gnu.org/licenses/>.
 
-import core.rblogging as _logging
-import core.rbconfig as _config
+import core.logging as _logging
+import core.config as _config
 
 import asyncio, sys, argparse, signal
 

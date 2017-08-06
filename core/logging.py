@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# RelayBot - Simple Multi-protocol Relay Bot, core/rblogging.py
+# RelayBot - Simple Multi-protocol Relay Bot, core/logging.py
 #
 # Copyright (C) 2016 Matthew Beeching
 #

@@ -19,8 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with RelayBot.  If not, see <http://www.gnu.org/licenses/>.
 
-from core.rblogging import *
-import core.rbconfig  as _config
+from core.logging import *
+import core.config  as _config
 import asyncio
 
 from modules.irc.protocol import IRCProtocol

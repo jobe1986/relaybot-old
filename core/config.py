@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# RelayBot - Simple Multi-protocol Relay Bot, core/rbconfig.py
+# RelayBot - Simple Multi-protocol Relay Bot, core/config.py
 #
 # Copyright (C) 2016 Matthew Beeching
 #
@@ -21,8 +21,8 @@
 
 from xml.etree.ElementTree import ElementTree
 
-import core.rblogging as _logging
-import core.rbmodules as _modules
+import core.logging as _logging
+import core.modules as _modules
 
 import os
 
