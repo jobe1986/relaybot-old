@@ -359,7 +359,7 @@ class client:
 		if msg['params'][0].lower() in self._channels:
 			if msg['params'][0].lower() in self._relays:
 				for rel in self._relays[msg['params'][0].lower()]:
-					text = msg['params'][-1]
+					text = msg['params'][-1].decode('utf-8','ignore').encode("utf-8")
 					prefix = ''
 					if rel.extra['prefix'] != '':
 						prefix = rel.extra['prefix']
