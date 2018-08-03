@@ -250,7 +250,7 @@ def _formatmctoirc(text):
 class client:
 	sockets = []
 	_jsonfixreg = None
-	_cmdoutputrep = {'players': '^(There are \d+/\d+ players online:)(.*?)$'}
+	_cmdoutputrep = {'players': '^(There are \d+ of a max \d+ players online:)(.*?)$'}
 	_cmdoutputres = {}
 
 	def __init__(self, name, rconhost='127.0.0.1', rconport=25575, rconpass='',
@@ -666,54 +666,72 @@ class client:
 		log.debug('Added relay rule (type:' + type + ', name:' + name + ', channel:' + channel + ', prefix=' + prefix + ')', self)
 
 class playerdeathfilter:
-	_deathreg = ['^.+? fell off a ladder$',
-			'^.+? fell off some vines$',
-			'^.+? fell out of the water$',
-			'^.+? fell from a high place$',
-			'^.+? was doomed to fall$',
-			'^.+? was doomed to fall by .+?$',
-			'^.+? was doomed to fall by .+? using .+?$',
-			'^.+? fell too far and was finished by .+?$',
-			'^.+? fell too far and was finished by .+? using .+?$',
-			'^.+? was struck by lightning$',
-			'^.+? went up in flames$',
-			'^.+? walked into fire whilst fighting .+?$',
-			'^.+? burned to death$',
-			'^.+? was burnt to a crisp whilst fighting .+?$',
-			'^.+? tried to swim in lava$',
-			'^.+? tried to swim in lava to escape .+?$',
-			'^.+? discovered floor was lava$',
-			'^.+? walked into danger zone due to .+?$',
-			'^.+? suffocated in a wall$',
-			'^.+? was squished too much$',
-			'^.+? drowned$',
-			'^.+? drowned whilst trying to escape .+?$',
-			'^.+? starved to death$',
-			'^.+? was pricked to death$',
-			'^.+? walked into a cactus whilst trying to escape .+?$',
-			'^.+? died$',
-			'^.+? blew up$',
-			'^.+? was blown up by .+?$',
-			'^.+? was killed by magic$',
-			'^.+? withered away$',
-			'^.+? was squashed by a falling anvil$',
-			'^.+? was squashed by a falling block$',
-			'^.+? was slain by .+?$',
-			'^.+? was slain by .+? using .+?$',
-			'^.+? was shot by .+?$',
-			'^.+? was shot by .+? using .+?$',
-			'^.+? was fireballed by .+?$',
-			'^.+? was fireballed by .+? using .+?$',
-			'^.+? was pummeled by .+?$',
-			'^.+? was pummeled by .+? using .+?$',
-			'^.+? was killed by .+? using magic$',
-			'^.+? was killed by .+? using .+?$',
-			'^.+? was killed trying to hurt .+?$',
-			'^.+? hit the ground too hard$',
-			'^.+? fell out of the world$',
-			'^.+? was roasted in dragon breath$',
-			'^.+? experienced kinetic energy$',
-			'^.+? went off with a bang$']
+	_deathreg = ['^.*? was pummeled by .*?$',
+			'^.*? was blown up by .*? using .*?$',
+			'^.*? was impaled by .*?$',
+			'^.*? was fireballed by .*?$',
+			'^.*? was slain by .*? using .*?$',
+			'^.*? was burnt to a crisp whilst fighting .*?$',
+			'^.*? suffocated in a wall$',
+			'^.*? was squashed by a falling block whilst fighting .*?$',
+			'^.*? experienced kinetic energy$',
+			'^.*? discovered the floor was lava$',
+			'^.*? was struck by lightning whilst fighting .*?$',
+			'^.*? was squished too much$',
+			'^.*? was slain by .*?$',
+			'^.*? fell off a ladder$',
+			'^.*? was pummeled by .*? using .*?$',
+			'^.*? was killed trying to hurt .*?$',
+			'^.*? was doomed to fall by .*? using .*?$',
+			'^.*? was killed by .*?$',
+			'^.*? was killed by .*? using .*?$',
+			'^.*? went up in flames$',
+			'^.*? was struck by lightning$',
+			'^.*? was killed by .*? trying to hurt .*?$',
+			'^.*? was killed by magic$',
+			'^.*? walked into danger zone due to .*?$',
+			'^.*? was pricked to death$',
+			'^.*? was squashed by a falling block$',
+			'^.*? fell out of the water$',
+			'^.*? died$',
+			'^.*? burned to death$',
+			'^.*? walked into a cactus whilst trying to escape .*?$',
+			'^.*? didn\'t want to live in the same world as .*?$',
+			'^.*? fell from a high place$',
+			'^.*? was fireballed by .*? using .*?$',
+			'^.*? was squashed by .*?$',
+			'^.*? fell too far and was finished by .*?$',
+			'^.*? withered away whilst fighting .*?$',
+			'^.*? was shot by .*? using .*?$',
+			'^.*? starved to death whilst fighting .*?$',
+			'^.*? fell too far and was finished by .*? using .*?$',
+			'^.*? tried to swim in lava$',
+			'^.*? withered away$',
+			'^.*? hit the ground too hard$',
+			'^.*? went off with a bang whilst fighting .*?$',
+			'^.*? was blown up by .*?$',
+			'^.*? was squashed by a falling anvil whilst fighting .*?$',
+			'^.*? drowned whilst trying to escape .*?$',
+			'^.*? fell off some vines$',
+			'^.*? was doomed to fall$',
+			'^.*? tried to swim in lava to escape .*?$',
+			'^.*? was roasted in dragon breath$',
+			'^.*? hit the ground too hard whilst trying to escape .*?$',
+			'^.*? was doomed to fall by .*?$',
+			'^.*? fell out of the world$',
+			'^.*? was shot by .*?$',
+			'^.*? was squashed by a falling anvil$',
+			'^.*? walked into fire whilst fighting .*?$',
+			'^.*? blew up$',
+			'^.*? was impaled by .*? with .*?$',
+			'^.*? suffocated in a wall whilst fighting .*?$',
+			'^.*? was roasted in dragon breath by .*?$',
+			'^.*? died because of .*?$',
+			'^.*? starved to death$',
+			'^.*? experienced kinetic energy whilst trying to escape .*?$',
+			'^.*? went off with a bang$',
+			'^.*? drowned$',
+			'^.*? was killed by .*? using magic$']
 	_deathregc = []
 
 	def filter(self, data):
@@ -747,13 +765,13 @@ class playerjoinpartfilter:
 			'net.minecraft.server.MinecraftServer': {
 				'joinpart': '^([^\s]+) (\\(formerly known as .+?\\) )?(?:joined|left) the game$'
 				},
-			'pc': {
+			'ud': {
 				'whitelist': '^com.mojang.authlib.GameProfile.*?id=([-a-f0-9]+?),.*?name=([^,]+?),.+?\\(\\/([0-9\\.]+?):([0-9]+?)\\) lost connection: You are not white-listed on this server!.*$'
 				}
 			}
 	_regc = {
 			'net.minecraft.server.MinecraftServer': {},
-			'pc': {}
+			'ud': {}
 			}
 
 	def filter(self, data):
