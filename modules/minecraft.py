@@ -250,7 +250,7 @@ def _formatmctoirc(text):
 class client:
 	sockets = []
 	_jsonfixreg = None
-	_cmdoutputrep = {'players': '^(There are \d+ of a max \d+ players online:)(.*?)$'}
+	_cmdoutputrep = {'players': '^(There are \d+ of a max \d+ players online:) ?(.*?)$'}
 	_cmdoutputres = {}
 
 	def __init__(self, name, rconhost='127.0.0.1', rconport=25575, rconpass='',
