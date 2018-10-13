@@ -373,7 +373,7 @@ class client:
 
 					size = unpack('<i', self._rconbuf[0:4])
 					size = size[0]
-				
+
 					if len(self._rconbuf) < size + 4:
 						break
 
@@ -811,7 +811,7 @@ class playerjoinpartfilter:
 class playerchatfilter:
 	_reg = {
 			'net.minecraft.server.MinecraftServer': {
-				'chatmsg': '^([\\[<])([^ ]+?)([\\]>]) (.*)$',
+				'chatmsg': '^([\\[<])(.+?)([\\]>]) (.*)$',
 				'chatact': '^\\* ([^ ]+) (.*)$',
 				'achievment': '^([^\s]+?) has (lost|just earned) the achievement \[.*?\]$',
 				'advancement': '^([^\s]+?) has made the advancement \[.*?\]$',
