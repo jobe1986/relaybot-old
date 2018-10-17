@@ -763,7 +763,7 @@ class playerdeathfilter:
 class playerjoinpartfilter:
 	_reg = {
 			'net.minecraft.server.MinecraftServer': {
-				'joinpart': '^([^\s]+) (\\(formerly known as .+?\\) )?(?:joined|left) the game$'
+				'joinpart': '^(.+?) (\\(formerly known as .+?\\) )?(?:joined|left) the game$'
 				},
 			'ue': {
 				'whitelist': '^com.mojang.authlib.GameProfile.*?id=([-a-f0-9]+?),.*?name=([^,]+?),.+?\\(\\/([0-9\\.]+?):([0-9]+?)\\) lost connection: You are not white-listed on this server!.*$'
@@ -811,12 +811,13 @@ class playerjoinpartfilter:
 class playerchatfilter:
 	_reg = {
 			'net.minecraft.server.MinecraftServer': {
-				'chatmsg': '^([\\[<])(.+?)([\\]>]) (.*)$',
+				'chatmsg': '^(<)(.+?)(>) (.*)$',
+				'chatmsgsrv': '^(\\[)([^ ]+?)(\\]) (.*)$',
 				'chatact': '^\\* ([^ ]+) (.*)$',
-				'achievment': '^([^\s]+?) has (lost|just earned) the achievement \[.*?\]$',
-				'advancement': '^([^\s]+?) has made the advancement \[.*?\]$',
-				'challenge': '^([^\s]+?) has completed the challenge \[.*?\]$',
-				'goal': '^([^\s]+?) has reached the goal \[.*?\]$'
+				'achievment': '^(.+?) has (lost|just earned) the achievement \[.*?\]$',
+				'advancement': '^(.+?) has made the advancement \[.*?\]$',
+				'challenge': '^(.+?) has completed the challenge \[.*?\]$',
+				'goal': '^(.+?) has reached the goal \[.*?\]$'
 				},
 			}
 	_regc = {
@@ -843,12 +844,12 @@ class playerchatfilter:
 			if m != None:
 				ret = data
 				text = _formatmctoirc(data.extra['obj'].message)
-				if key == 'chatmsg' or key == 'chatact':
+				if key == 'chatmsg' or key == 'chatact' or key == 'chatmsgsrv':
 					name = ''
 					npre = ''
 					nsuf = ''
 					text = ''
-					if key == 'chatmsg':
+					if key == 'chatmsg' or key == 'chatmsgsrv':
 						npre = m.group(1)
 						name = m.group(2)
 						nsuf = m.group(3)
