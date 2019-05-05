@@ -37,7 +37,8 @@ filterobjs = {
 		'playerdeath': None,
 		'playerjoinpart': None,
 		'playerchat': None,
-		'overviewer': None
+		'overviewer': None,
+		'crash': None
 	}
 
 def loadconfig(doc):
@@ -871,6 +872,36 @@ class playerchatfilter:
 				return relay.FILTER_MATCH, ret
 		return relay.FILTER_NOMATCH, None
 
+class crashfilter:
+	_reg = {'uj': '^This crash report has been saved to'}
+	_regc = {'uj': None}
+
+	def filter(self, data):
+		if data.source.type != 'minecraft' or \
+			data.source.channel != 'udp':
+			return relay.FILTER_NOMATCH, None
+		if not 'obj' in data.extra:
+			return relay.FILTER_NOMATCH, None
+		if type(data.extra['obj']) != MCUDPLogPacket:
+			return relay.FILTER_NOMATCH, None
+		if not data.extra['obj'].logger in self._reg:
+			return relay.FILTER_NOMATCH, None
+		if data.extra['obj'].level != 'ERROR':
+			return relay.FILTER_NOMATCH, None
+		if data.extra['obj'].thread != 'Server Watchdog':
+			return relay.FILTER_NOMATCH, None
+
+		if self._regc[data.extra['obj'].logger] is None:
+			self._regc[data.extra['obj'].logger] = re.compile(self._reg[data.extra['obj'].logger])
+
+		m = self._regc[data.extra['obj'].logger].match(data.extra['obj'].message)
+		if m != None:
+			ret = data._replace(text='ERROR: The server has crashed')
+			return relay.FILTER_MATCH, ret
+
+		return relay.FILTER_NOMATCH, None
+
+
 class overviewerfilter:
 	def filter(self, data):
 		if data.source.type != 'minecraft' or \
@@ -892,3 +923,4 @@ filterobjs['playerdeath'] = playerdeathfilter()
 filterobjs['playerjoinpart'] = playerjoinpartfilter()
 filterobjs['playerchat'] = playerchatfilter()
 filterobjs['overviewer'] = overviewerfilter()
+filterobjs['crash'] = crashfilter()
