@@ -282,6 +282,7 @@ class client:
 			return
 		log.protocol('<-- ' + line, self)
 		msg = self._parse_raw(line)
+		log.debug('Parsed message: ' + str(msg), self)
 		self._execmsg(msg)
 
 	def _parse_raw(self, line):
