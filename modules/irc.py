@@ -594,7 +594,8 @@ class client:
 
 		try:
 			buf = self._ircbuf + self._sock.recv(1024)
-		except:
+		except Exception as e:
+			log.error('Exception receving from socket: ' + str(e))
 			buf = ''
 
 		if (buf == ''):
